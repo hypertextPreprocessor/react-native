@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no"/>
+<title>请在下方方框内签名</title>
+<script type="text/javascript" src="../js/public.js"></script>
+<link type="text/css" rel="stylesheet" href="../css/public.css"/>
+<style>
+
+</style>
+</head>
+<body>
+		<h1 style="padding:3% 2%;">请在下方方框内签名</h1>
+		<canvas width="1024" height="600" style="border:2px dashed #dcdcdc;" id="canvas">您的设备不支持canvas</canvas>
+		<script>
+			var canvas = document.querySelector("#canvas");
+			var w = document.documentElement.clientWidth;
+			var h = document.documentElement.clientHeight;
+			var h1 = document.querySelector('h1').clientHeight;
+			canvas.setAttribute('width',w-4);
+			canvas.setAttribute('height',h-4-h1);
+			var context = canvas.getContext('2d');
+			function draw(){
+				context.save();
+				context.strokeStyle="#000";
+				context.lineWidth="6";
+				context.fillStyle="#F2F2F2";
+				context.font="bold 64px/65px microsoft yahei";
+				context.textAlign="center";
+				context.fillText("签名处",canvas.width/2,canvas.height/2);
+				context.restore();
+				context.save();
+				context.fillStyle="none";
+				context.strokeStyle="#000";
+				context.lineWidth=2;
+				context.font="45px/65px microsoft yahei";
+				context.strokeRect(canvas.width-200,canvas.height-80,200,80);
+				context.fillText("重写",canvas.width-135,canvas.height-23)
+			}
+			
+			draw();
+			canvas.ontouchstart=function(e){
+				e.preventDefault();
+				//console.log(e.changedTouches[0].pageY+"::"+e.changedTouches[0].clientY);
+				var offsetX = e.changedTouches[0].pageX - canvas.offsetLeft-canvas.clientLeft;
+				var offsetY = e.changedTouches[0].pageY - canvas.offsetTop-canvas.clientTop;
+				if(offsetX<=canvas.width-2-200 || offsetY<=canvas.height-2-80){
+					context.beginPath();
+					context.moveTo(offsetX,offsetY-2);
+				}else{
+					context.closePath();
+					
+					context.clearRect(0,0,canvas.width,canvas.height);
+					draw();
+				}
+				
+				
+				this.ontouchmove=function(e){
+					
+					offsetX = e.changedTouches[0].pageX - canvas.offsetLeft-canvas.clientLeft;
+					offsetY = e.changedTouches[0].pageY - canvas.offsetTop-canvas.clientTop;
+					if(offsetX<=canvas.width-2-200 || offsetY<=canvas.height-2-80){
+						context.lineTo(offsetX,offsetY);
+						context.stroke();
+					}else{
+						context.moveTo(offsetX,offsetY-2);
+						context.closePath();
+						
+					}
+				}
+				this.ontouchend=function(e){
+					context.closePath();
+				}
+			}
+			
+		</script>
+</body>
+</html>
