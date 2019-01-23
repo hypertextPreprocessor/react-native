@@ -12,6 +12,7 @@ import {
 	WebView,
 	Alert,
 	FlatList,
+	SectionList,
 	TouchableOpacity,
 	StatusBar,
 	Dimensions,
@@ -86,14 +87,45 @@ class Swipers extends React.Component{
 class Mapmakers extends React.Component{
 	constructor(props){
 		super(props);
+		//this.points=[{title:'D',data:[{latitude:23.119541,longitude:113.308875}]}]
+		this.points=[{latitude:23.119541,longitude:113.308875}]
+		this.markers = this.markers.bind(this);
+		//console.warn(this.props.points);
 	}
-	render(){
-		return (
-			<MapView.Marker image='flag' coordinate={{latitude:23.11544,longitude: 113.325285,}}>
+	markers(){
+		var latlong=[];
+		var points = this.points;
+		SQLite.openDatabase({name:"sdy.db"}).then((DB)=>{
+			DB.transaction(function(tx){
+				tx.executeSql(`SELECT * FROM comInfo`).then(([txt,result])=>{
+					for(var i=0;i<result.rows.length;i++){
+						//result.rows.item(i).use_company_latitude;
+						latlong.push({latitude:result.rows.item(i).use_company_latitude,longitude:result.rows.item(i).use_company_longitude})
+					}
+					points = latlong;
+					return latlong;
+				}).then(function(latlong){
+					//console.warn(latlong);
+				});	
+			})
+		});
+		const listItems = this.points.map((item)=>(
+			<MapView.Marker image='flag' coordinate={item} key={item.toString()}>
 				<View style={styles.customInfoWindow}>
 					<Swipers />
 				</View>
 			</MapView.Marker>
+		))
+		return listItems;
+	}
+	componentDidUpdate(){
+		//console.warn(this.points);
+	}
+	render(){
+		return (
+			<View>
+				{this.markers()}
+			</View>
 		)
 	}
 }
@@ -180,6 +212,54 @@ export default class HomeScreen extends React.Component{
 			btnWidth:w
 		}))
 	}
+	handleData(data){
+		/*
+		sdyDb.transaction(function(tx){
+		tx.executeSql(`SELECT * FROM comInfo`).then(([txt,result])=>{
+				for(var i=0;i<result.rows.length;i++){
+					console.warn(result.rows.item(i));
+				}
+			});	
+			})
+		*/
+		var I = this;
+		sdyDb.transaction(function(tx){
+			tx.executeSql(`DELETE FROM comInfo WHERE usrid = '${I.uid}'`).then(([txt,result])=>{
+				//console.warn(result);
+			});
+		});
+		var uid = I.uid;
+		for(var i=0;i<data.length;i++){
+			(function(i){
+				var cid = data[i].use_company_id;
+				var clat = data[i].use_company_latitude;
+				var clong = data[i].use_company_longitude;
+				var ctel = data[i].use_company_mobile_phone;
+				var cname = data[i].use_company_name;
+				var cct = data[i].use_company_contact;
+				var caddr = data[i].company_address;
+				sdyDb.transaction(function(tx){
+					tx.executeSql(`INSERT INTO comInfo (
+						use_company_id,use_company_latitude,use_company_longitude,use_company_mobile_phone,
+						use_company_name,use_company_contact,company_address,usrid
+					) VALUES (
+						'${cid}',
+						'${clat}',
+						'${clong}',
+						'${ctel}',
+						'${cname}',
+						'${cct}',
+						'${caddr}',
+						'${uid}'
+					)`).then(([txt,result])=>{
+					//console.warn(result);
+				});
+				})
+			})(i);
+			
+		}
+		
+	}
 	async _getUid(){
 		const userToken = await AsyncStorage.getItem('uid');
 	}
@@ -209,7 +289,9 @@ export default class HomeScreen extends React.Component{
 						use_company_mobile_phone TEXT,
 						use_company_name TEXT,
 						use_company_contact TEXT,
-						company_address TEXT
+						company_address TEXT,
+						usrid TEXT DEFAULT NULL,
+						FOREIGN KEY(usrid) REFERENCES sysusr(uid)
 					)`).then(([txt,result])=>{
 						//成功创建一个企业信息表
 						//console.warn(result);
@@ -218,22 +300,16 @@ export default class HomeScreen extends React.Component{
 			})
 		}).then(()=>{
 			//30.APP测试任务工单
-			fetch(apiHost+"/app/testTask/listTestTaskOrder.do",{
+			//console.warn(I.uid);
+			fetch(apiHost+"/app/testTask/listTestTaskCompany.do",{
 				method:"POST",
 				headers:{"Content-Type":"application/x-www-form-urlencoded"},
-				body:"userid=89c0740abf8b444cb48605ae999a9442"
+				body:"userid="+I.uid
 			}).then((res)=>{
-				var a = [];
-				var a=[],b=[],c=[],d=[],e=[];
 				if(res.ok){
 					res.json().then(jsn=>{
 						if(jsn.result=="1"){
-							for(var i=0;i<jsn.data.length;i++){
-								 a.push({latitude:Number(jsn.data[i].use_company_latitude),longitude:Number(jsn.data[i].use_company_longitude)});
-								 //a.push({latitude:jsn.data[i].use_company_latitude,longitude:jsn.data[i].use_company_longitude});
-								 
-							}
-						this.points = a;	
+							I.handleData(jsn.data);
 						}else{
 							Alert.alert(jsn.message);
 						}
@@ -242,7 +318,6 @@ export default class HomeScreen extends React.Component{
 					Alert.alert(res.statusText);
 				}
 			},(err)=>{Alert.alert('网络错误')})
-			
 		})
 	}
 	componentDidUpdate(prevProps, prevState, snapshot){
@@ -257,6 +332,7 @@ export default class HomeScreen extends React.Component{
 		*/
 	}
 	render(){
+		//console.warn(this.points);
 		const Undo = ({match}) => <Datalist match={match} dataList={data1} nav={this.nav}/>
 		const Todo = ({match}) => <Datalist match={match} dataList={data2} nav={this.nav}/>
 		const Doing = ({match}) => <Datalist match={match} dataList={data3} nav={this.nav}/>
@@ -314,7 +390,7 @@ export default class HomeScreen extends React.Component{
 					}
 				>
 					
-					<Mapmakers />
+					<Mapmakers points={this.points}/>
 				</MapView>
 				<View style={styles.searchBar}>
 					<SearchBar
@@ -352,7 +428,15 @@ export default class HomeScreen extends React.Component{
 									<View style={{width:48,height:48,backgroundColor:'#fff',borderRadius:50,padding:8}}><Image style={{width:'100%',height:'100%'}} source={require('../images/gongdanicon.png')} /></View>
 									<View style={{backgroundColor:'#fff',width:'50%',borderRadius:8,marginLeft:15}}>
 										<TouchableOpacity onPress={()=>{this.linshi()}}>
-											<Text style={styles.gondan}>增添部分</Text>
+											<Text style={styles.gondan}>热效率测试</Text>
+										</TouchableOpacity>
+									</View>
+							</View>
+							<View style={styles.mckd}>
+									<View style={{width:48,height:48,backgroundColor:'#fff',borderRadius:50,padding:8}}><Image style={{width:'100%',height:'100%'}} source={require('../images/gongdanicon.png')} /></View>
+									<View style={{backgroundColor:'#fff',width:'50%',borderRadius:8,marginLeft:15}}>
+										<TouchableOpacity onPress={()=>{this.linshi()}}>
+											<Text style={styles.gondan}>详细测试</Text>
 										</TouchableOpacity>
 									</View>
 							</View>
@@ -360,7 +444,7 @@ export default class HomeScreen extends React.Component{
 								<View style={{width:48,height:48,backgroundColor:'#fff',borderRadius:50,padding:8}}><Image style={{width:'100%',height:'100%'}} source={require('../images/gongdanicon.png')} /></View>
 								<View style={{backgroundColor:'#fff',width:'50%',borderRadius:8,marginLeft:15,overflow:'hidden'}}>
 									<TouchableOpacity onPress={this._trabajo}>
-										<Text style={styles.gondan}>我的工单</Text>
+										<Text style={styles.gondan}>简单测试</Text>
 									</TouchableOpacity>
 								</View>
 							</View>
