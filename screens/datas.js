@@ -20,13 +20,19 @@ import { NativeRouter,Route,Link,Switch,Redirect,withRouter} from "react-router-
 import { Provider,connect } from 'react-redux';
 import { createStore } from 'redux';
 import { styles } from './styles.js';
-export default class Datalist extends React.Component{
+import SQLite from 'react-native-sqlite-storage';
+SQLite.DEBUG(true);
+SQLite.enablePromise(true);
+let sdyDb;
+class Datalist extends React.Component{
 	//console.warn(props.match);
 	constructor(props){
 		super(props);
 	}
 	nvt(){
-		//console.warn(this.props)
+		//console.warn(this.props);
+		//store.dispatch({type:'nonescense'});
+		//store.subscribe(() => console.warn(store.getState()));
 	}
 	componentDidMount(){
 		
@@ -53,5 +59,4 @@ export default class Datalist extends React.Component{
 		)
 	}
 }
-
-//export default connect()(Datalist);
+export default connect()(Datalist);

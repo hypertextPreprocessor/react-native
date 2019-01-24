@@ -12,6 +12,7 @@ import {
 	WebView,
 	Alert,
 	FlatList,
+	Linking,
 	SectionList,
 	TouchableOpacity,
 	StatusBar,
@@ -41,6 +42,14 @@ var data3 = [{key:'佛山沙堤机场'},{key:'佛山南海湾森林生态园'}]
 var data4 = [{key:'中山市公安局巡逻警察支队'},{key:'中山市本腾汽车有限公司'}]
 var data5 = [{key:'惠州市焦点二手车市场'},{key:'汕尾市城区香洲路777号'}]
 class Swipers extends React.Component{
+	constructor(props){
+		super(props);
+	}
+	componentDidMount(){
+		//console.warn(this.props.comid);
+		//console.warn(store.getState());
+		//store.subscribe(() => console.warn(store.getState()));
+	}
 	render(){
 		return(
 			<Swiper style={styles.wrapper} showsButtons={false}>
@@ -63,7 +72,11 @@ class Swipers extends React.Component{
 					</View>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>联系电话</Text>
-						<Text style={styles.textx}>15920419705</Text>
+						<TouchableOpacity onPress={()=>{
+							Linking.openURL(`tel:${`15920419705`}`)
+						}} style={styles.textx}>
+						<Text style={{textDecorationLine:"underline"}}>15920419705</Text>
+						</TouchableOpacity>
 					</View>
 					<View style={styles.slideSub}>
 						<Button bordered style={styles.gdbtn}>
@@ -90,36 +103,48 @@ class Mapmakers extends React.Component{
 		//this.points=[{title:'D',data:[{latitude:23.119541,longitude:113.308875}]}]
 		this.points=[{latitude:23.119541,longitude:113.308875}]
 		this.markers = this.markers.bind(this);
-		//console.warn(this.props.points);
+		this.state={
+			upd:"",
+			comid:[],
+		}
 	}
 	markers(){
+		if(this.state.comid.length){
+			const listItems = this.points.map((item,idx)=>(
+				<MapView.Marker image='flag' coordinate={item} key={idx}>
+					<View style={styles.customInfoWindow}>
+						<Swipers comid={this.state.comid[idx]}/>
+					</View>
+				</MapView.Marker>
+			))
+			return listItems;
+		}
+	}
+	componentDidMount(){
 		var latlong=[];
-		var points = this.points;
+		var comID=[];
 		SQLite.openDatabase({name:"sdy.db"}).then((DB)=>{
-			DB.transaction(function(tx){
+			DB.transaction((tx)=>{
 				tx.executeSql(`SELECT * FROM comInfo`).then(([txt,result])=>{
 					for(var i=0;i<result.rows.length;i++){
-						//result.rows.item(i).use_company_latitude;
-						latlong.push({latitude:result.rows.item(i).use_company_latitude,longitude:result.rows.item(i).use_company_longitude})
+						latlong.push({latitude:Number(result.rows.item(i).use_company_latitude),longitude:Number(result.rows.item(i).use_company_longitude)})
+						comID.push(result.rows.item(i).use_company_id);
 					}
-					points = latlong;
-					return latlong;
-				}).then(function(latlong){
-					//console.warn(latlong);
-				});	
-			})
+					this.points = latlong;
+					return [latlong,comID];
+				},(err)=>{console.log(err)}).then(([latlong,comID])=>{
+					//this.markers(latlong);
+					this.setState({
+						upd:"potted",
+						comid:comID
+					})
+				});
+			}).catch((err)=>{console.warn(err)});
+			
 		});
-		const listItems = this.points.map((item)=>(
-			<MapView.Marker image='flag' coordinate={item} key={item.toString()}>
-				<View style={styles.customInfoWindow}>
-					<Swipers />
-				</View>
-			</MapView.Marker>
-		))
-		return listItems;
 	}
 	componentDidUpdate(){
-		//console.warn(this.points);
+		//console.warn(this.state.upd);
 	}
 	render(){
 		return (
@@ -149,7 +174,8 @@ export default class HomeScreen extends React.Component{
 			menuClick:false,
 			menuIcon:true,
 			popOut:new Animated.Value(0),
-			popIn:new Animated.Value(0)
+			popIn:new Animated.Value(0),
+			showMarkers:false
 		}
 	}
 	static navigationOptions = {
@@ -158,7 +184,7 @@ export default class HomeScreen extends React.Component{
 	_trabajo(){			//工单菜单;
 		this.setState((state,props)=>({
 			menuClick:false,
-			menuIcon:true,
+			menuIcon:true
 		}));
 		Animated.sequence([
 			Animated.timing(
@@ -212,6 +238,14 @@ export default class HomeScreen extends React.Component{
 			btnWidth:w
 		}))
 	}
+	closeDatabase(){
+		if(sdyDb){
+			console.log("closeing database...");
+			sdyDb.close().then((status)=>{
+				console.log("数据库关闭");
+			}).catch((error)=>{console.log("无法关闭原因"+error)});
+		}
+	}
 	handleData(data){
 		/*
 		sdyDb.transaction(function(tx){
@@ -223,10 +257,10 @@ export default class HomeScreen extends React.Component{
 			})
 		*/
 		var I = this;
-		sdyDb.transaction(function(tx){
+		sdyDb.transaction((tx)=>{
 			tx.executeSql(`DELETE FROM comInfo WHERE usrid = '${I.uid}'`).then(([txt,result])=>{
 				//console.warn(result);
-			});
+			}).catch((error)=>{console.warn(error)});
 		});
 		var uid = I.uid;
 		for(var i=0;i<data.length;i++){
@@ -238,7 +272,7 @@ export default class HomeScreen extends React.Component{
 				var cname = data[i].use_company_name;
 				var cct = data[i].use_company_contact;
 				var caddr = data[i].company_address;
-				sdyDb.transaction(function(tx){
+				sdyDb.transaction((tx)=>{
 					tx.executeSql(`INSERT INTO comInfo (
 						use_company_id,use_company_latitude,use_company_longitude,use_company_mobile_phone,
 						use_company_name,use_company_contact,company_address,usrid
@@ -253,12 +287,13 @@ export default class HomeScreen extends React.Component{
 						'${uid}'
 					)`).then(([txt,result])=>{
 					//console.warn(result);
-				});
-				})
+				}).catch((error)=>{console.log(error)});
+				}).catch((error)=>{console.log(error.message)});
 			})(i);
-			
 		}
-		
+		this.setState({
+			showMarkers:true
+		})
 	}
 	async _getUid(){
 		const userToken = await AsyncStorage.getItem('uid');
@@ -274,13 +309,13 @@ export default class HomeScreen extends React.Component{
 			popOut:0
 		}));
 		//获取用户uid
-		AsyncStorage.getItem('uid').then(function(uid){
+		AsyncStorage.getItem('uid').then((uid)=>{
 			I.uid = uid;
 		}).then(()=>{
 			SQLite.openDatabase({name:"sdy.db"}).then((DB)=>{
 				sdyDb = DB;
 				//创建一个企业信息表
-				sdyDb.transaction(function(tx){
+				sdyDb.transaction((tx)=>{
 					tx.executeSql(
 					`CREATE TABLE IF NOT EXISTS comInfo(
 						use_company_id TEXT PRIMARY KEY,
@@ -294,7 +329,6 @@ export default class HomeScreen extends React.Component{
 						FOREIGN KEY(usrid) REFERENCES sysusr(uid)
 					)`).then(([txt,result])=>{
 						//成功创建一个企业信息表
-						//console.warn(result);
 					},function(err){console.warn("啊哦，失败咯"+err)}).catch((error)=>{Alert.alert("执行SQL失败"+error)});
 				},function(err){}).catch((error)=>{console.log('数据创建失败'+error)});
 			})
@@ -389,9 +423,9 @@ export default class HomeScreen extends React.Component{
 						})
 					}
 				>
-					
-					<Mapmakers points={this.points}/>
+				   {this.state.showMarkers?(<Mapmakers points={this.points}/>):(<Text></Text>)}
 				</MapView>
+			
 				<View style={styles.searchBar}>
 					<SearchBar
 						round
