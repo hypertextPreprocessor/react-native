@@ -21,6 +21,8 @@ import { Provider,connect } from 'react-redux';
 import { createStore } from 'redux';
 import { styles } from './styles.js';
 import SQLite from 'react-native-sqlite-storage';
+import store from './redux/store.js';
+
 SQLite.DEBUG(true);
 SQLite.enablePromise(true);
 let sdyDb;
@@ -29,9 +31,9 @@ class Datalist extends React.Component{
 	constructor(props){
 		super(props);
 	}
-	nvt(){
+	nvt(item){
 		//console.warn(this.props);
-		//store.dispatch({type:'nonescense'});
+		store.dispatch({type:"LIST_ALL"});
 		//store.subscribe(() => console.warn(store.getState()));
 	}
 	componentDidMount(){
@@ -42,18 +44,19 @@ class Datalist extends React.Component{
 			<View style={[styles.listDataPanel]}>
 				<FlatList
 					data={this.props.dataList}
-					renderItem={({item})=>
+					renderItem={({item,index})=>
 						{
 							return (
-								<TouchableOpacity onPress={()=>{this.nvt()}} style={{flex:1,flexDirection:'row',alignSelf:'center',justifyContent:'center'}}>
+								<TouchableOpacity onPress={()=>{this.nvt(item)}} style={{flex:1,flexDirection:'row',alignSelf:'center',justifyContent:'center'}}>
 									<View style={{width:'98%',backgroundColor:'#FCFDFE',borderWidth:1,borderColor:'#3F92B8',borderRadius:5,marginVertical:8,paddingVertical:8}}>
-										<Text style={{width:'100%',color:'#39AFEB',paddingHorizontal:5}}>{item.key}</Text>
-										<Text style={{width:'100%',color:'#39AFEB',fontSize:12,paddingHorizontal:5}}>{item.key}</Text>
+										<Text style={{width:'100%',color:'#39AFEB',paddingHorizontal:5}}>{item.device_model}</Text>
+										<Text style={{width:'100%',color:'#39AFEB',fontSize:12,paddingHorizontal:5}}>{item.use_company_contact + item.use_company_mobile_phone}</Text>
 									</View>
 								</TouchableOpacity>
 							)
 						}
 					}
+					keyExtractor={(item,index)=>item.id}
 				/>
 			</View>
 		)
