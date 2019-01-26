@@ -12,6 +12,7 @@ import {
 	WebView,
 	Alert,
 	FlatList,
+	Linking,
 	SectionList,
 	TouchableOpacity,
 	StatusBar,
@@ -35,12 +36,22 @@ import { Button } from 'native-base';
 SQLite.DEBUG(true);
 SQLite.enablePromise(true);
 let sdyDb;
+/*
 var data1 = [{key:'广州汽修厂'},{key:'广汽集团有限公司'},{key:'广东潮州市湘桥区官塘工业园区'}]
 var data2 = [{key:'惠州'},{key:'广州黄花岗第三分院'}]
 var data3 = [{key:'佛山沙堤机场'},{key:'佛山南海湾森林生态园'}]
 var data4 = [{key:'中山市公安局巡逻警察支队'},{key:'中山市本腾汽车有限公司'}]
 var data5 = [{key:'惠州市焦点二手车市场'},{key:'汕尾市城区香洲路777号'}]
+*/
 class Swipers extends React.Component{
+	constructor(props){
+		super(props);
+	}
+	componentDidMount(){
+		//console.warn(this.props.comid);
+		//console.warn(store.getState());
+		//store.subscribe(() => console.warn(store.getState()));
+	}
 	render(){
 		return(
 			<Swiper style={styles.wrapper} showsButtons={false}>
@@ -63,7 +74,11 @@ class Swipers extends React.Component{
 					</View>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>联系电话</Text>
-						<Text style={styles.textx}>15920419705</Text>
+						<TouchableOpacity onPress={()=>{
+							Linking.openURL(`tel:${`15920419705`}`)
+						}} style={styles.textx}>
+						<Text style={{textDecorationLine:"underline"}}>15920419705</Text>
+						</TouchableOpacity>
 					</View>
 					<View style={styles.slideSub}>
 						<Button bordered style={styles.gdbtn}>
@@ -90,36 +105,48 @@ class Mapmakers extends React.Component{
 		//this.points=[{title:'D',data:[{latitude:23.119541,longitude:113.308875}]}]
 		this.points=[{latitude:23.119541,longitude:113.308875}]
 		this.markers = this.markers.bind(this);
-		//console.warn(this.props.points);
+		this.state={
+			upd:"",
+			comid:[],
+		}
 	}
 	markers(){
+		if(this.state.comid.length){
+			const listItems = this.points.map((item,idx)=>(
+				<MapView.Marker image='flag' coordinate={item} key={idx}>
+					<View style={styles.customInfoWindow}>
+						<Swipers comid={this.state.comid[idx]}/>
+					</View>
+				</MapView.Marker>
+			))
+			return listItems;
+		}
+	}
+	componentDidMount(){
 		var latlong=[];
-		var points = this.points;
+		var comID=[];
 		SQLite.openDatabase({name:"sdy.db"}).then((DB)=>{
-			DB.transaction(function(tx){
+			DB.transaction((tx)=>{
 				tx.executeSql(`SELECT * FROM comInfo`).then(([txt,result])=>{
 					for(var i=0;i<result.rows.length;i++){
-						//result.rows.item(i).use_company_latitude;
-						latlong.push({latitude:result.rows.item(i).use_company_latitude,longitude:result.rows.item(i).use_company_longitude})
+						latlong.push({latitude:Number(result.rows.item(i).use_company_latitude),longitude:Number(result.rows.item(i).use_company_longitude)})
+						comID.push(result.rows.item(i).use_company_id);
 					}
-					points = latlong;
-					return latlong;
-				}).then(function(latlong){
-					//console.warn(latlong);
-				});	
-			})
+					this.points = latlong;
+					return [latlong,comID];
+				},(err)=>{console.log(err)}).then(([latlong,comID])=>{
+					//this.markers(latlong);
+					this.setState({
+						upd:"potted",
+						comid:comID
+					})
+				});
+			}).catch((err)=>{console.warn(err)});
+			
 		});
-		const listItems = this.points.map((item)=>(
-			<MapView.Marker image='flag' coordinate={item} key={item.toString()}>
-				<View style={styles.customInfoWindow}>
-					<Swipers />
-				</View>
-			</MapView.Marker>
-		))
-		return listItems;
 	}
 	componentDidUpdate(){
-		//console.warn(this.points);
+		//console.warn(this.state.upd);
 	}
 	render(){
 		return (
@@ -141,6 +168,11 @@ export default class HomeScreen extends React.Component{
 		this.points = [];
 		this.config = config;
 		this.uid;
+		this.data1 = [{key:"待检测无数据"}];
+		this.data2 = [{key:"已检测无数据"}];
+		this.data3 = [{key:"待结果无数据"}];
+		this.data4 = [{key:"已结束无数据"}];
+		this.data5 = [{key:"待审核无数据"}];
 		this.state={
 			CenLatitude:23.119541,
 			CenLongitude:113.308875,
@@ -149,7 +181,8 @@ export default class HomeScreen extends React.Component{
 			menuClick:false,
 			menuIcon:true,
 			popOut:new Animated.Value(0),
-			popIn:new Animated.Value(0)
+			popIn:new Animated.Value(0),
+			showMarkers:false
 		}
 	}
 	static navigationOptions = {
@@ -158,7 +191,7 @@ export default class HomeScreen extends React.Component{
 	_trabajo(){			//工单菜单;
 		this.setState((state,props)=>({
 			menuClick:false,
-			menuIcon:true,
+			menuIcon:true
 		}));
 		Animated.sequence([
 			Animated.timing(
@@ -212,21 +245,20 @@ export default class HomeScreen extends React.Component{
 			btnWidth:w
 		}))
 	}
+	closeDatabase(){
+		if(sdyDb){
+			console.log("closeing database...");
+			sdyDb.close().then((status)=>{
+				console.log("数据库关闭");
+			}).catch((error)=>{console.log("无法关闭原因"+error)});
+		}
+	}
 	handleData(data){
-		/*
-		sdyDb.transaction(function(tx){
-		tx.executeSql(`SELECT * FROM comInfo`).then(([txt,result])=>{
-				for(var i=0;i<result.rows.length;i++){
-					console.warn(result.rows.item(i));
-				}
-			});	
-			})
-		*/
 		var I = this;
-		sdyDb.transaction(function(tx){
+		sdyDb.transaction((tx)=>{
 			tx.executeSql(`DELETE FROM comInfo WHERE usrid = '${I.uid}'`).then(([txt,result])=>{
 				//console.warn(result);
-			});
+			}).catch((error)=>{console.warn(error)});
 		});
 		var uid = I.uid;
 		for(var i=0;i<data.length;i++){
@@ -238,7 +270,7 @@ export default class HomeScreen extends React.Component{
 				var cname = data[i].use_company_name;
 				var cct = data[i].use_company_contact;
 				var caddr = data[i].company_address;
-				sdyDb.transaction(function(tx){
+				sdyDb.transaction((tx)=>{
 					tx.executeSql(`INSERT INTO comInfo (
 						use_company_id,use_company_latitude,use_company_longitude,use_company_mobile_phone,
 						use_company_name,use_company_contact,company_address,usrid
@@ -253,11 +285,174 @@ export default class HomeScreen extends React.Component{
 						'${uid}'
 					)`).then(([txt,result])=>{
 					//console.warn(result);
-				});
-				})
+				}).catch((error)=>{console.log(error)});
+				}).catch((error)=>{console.log(error.message)});
 			})(i);
-			
 		}
+		this.setState({
+			showMarkers:true
+		})
+	}
+	handleOrderData(data){
+		//SELECT * FROM pragma_table_info('orderList')
+		//DELETE FROM orderList WHERE order_leader = '${I.uid}'
+		/*
+						var arr = [];
+				for(var i=0;i<result.rows.length;i++){
+					arr.push(result.rows.item(i).name);
+				}
+				console.warn(arr);
+		*/
+		var I = this;
+		var uid = I.uid;
+		sdyDb.transaction((tx)=>{
+			tx.executeSql(`DELETE FROM orderList WHERE order_leader = '${I.uid}'`).then(([txt,result])=>{
+				
+			}).catch((error)=>{console.warn(error)});
+			for(var i=0;i<data.length;i++){
+				(function(i){
+					sdyDb.transaction((tx)=>{
+						tx.executeSql(
+							`INSERT INTO deviceList (boiler_id,device_code,device_model) VALUES (
+							'${data[i].boiler_id}',
+							'${data[i].device_code}',
+							'${data[i].device_model}'
+						)`).then(([txt,result])=>{
+							//console.warn(result);
+						},(err)=>{
+							//执行失败，默认不做任何操作;
+						});
+					},(err)=>{
+						//插入失败，默认不做任何操作;
+					})
+				})(i)
+			}
+		})
+		var data1 = []; 	//待检测
+		var data2 = [];	//已检测
+		var data3 = [];	//待结果
+		var data4 = [];	//已结束
+		var data5 = [];	//预留
+		for(var i=0;i<data.length;i++){
+			//状态（1为申请，2为已领取，3为已检测，4为已化验，5为审批成功，6为审批退回）
+			data[i].key = i;
+			if(data[i].status=="2"){
+				data1.push(data[i]);
+			}else if(data[i].status=="3"){
+				data2.push(data[i]);
+			}else if(data[i].status=="4"){
+				data3.push(data[i]);
+			}else if(data[i].status=="5"){
+				data4.push(data[i]);
+			}
+			(function(i){
+				sdyDb.transaction((tx)=>{
+					tx.executeSql(`INSERT INTO orderList(
+						test_task_work_order_id,
+						use_company_contact,
+						use_company_mobile_phone,
+						use_order_type,
+						test_task_id,
+						boiler_id,
+						team_users,
+						status,
+						plan_test_date,
+						order_leader,
+						allocation_user,
+						allocation_time,
+						alllcation_remark,
+						use_company_id
+						) VALUES (
+							'${data[i].test_task_work_order_id}',
+							'${data[i].use_company_contact}',
+							'${data[i].use_company_mobile_phone}',
+							'${data[i].type}',
+							'${data[i].test_task_id}',
+							'${data[i].boiler_id}',
+							'${data[i].team_users}',
+							'${data[i].status}',
+							'${data[i].plan_test_date}',
+							'${data[i].order_leader}',
+							'${data[i].allocation_user}',
+							'${data[i].allocation_time}',
+							'${data[i].alllcation_remark}',
+							'${data[i].use_company_id}'
+						)`).then(([txt,result])=>{
+						//console.warn(result);
+					}).catch((error)=>{console.warn(error)});
+				});
+			})(i)
+		}
+		if(!data1.length){
+			data1 = [{key:"待检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data2.length){
+			data2 = [{key:"已检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data3.length){
+			data3 = [{key:"待结果无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data4.length){
+			data4 = [{key:"已结束无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data5.length){
+			data5 = [{key:"待审核无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}
+		this.data1 = data1;
+		this.data2 = data2;
+		this.data3 = data3;
+		this.data4 = data4;
+		this.data5 = data5;
+	}
+	//离线数据支持;
+	offlinesupport(){
+		this.setState({
+			showMarkers:true
+		});
+	}
+	offlinesupports(){
+		var data = [];
+		AsyncStorage.getItem('uid').then((uid)=>{
+			sdyDb.transaction((tx)=>{
+				tx.executeSql(`SELECT * FROM orderList INNER JOIN deviceList ON orderList.boiler_id = deviceList.boiler_id WHERE order_leader = '${uid}'`).then(([txt,result])=>{
+					for(var i=0;i<result.rows.length;i++){
+						data.push(result.rows.item(i));
+					}
+					return data;
+				}).then((data)=>{
+					var data1 = []; 	//待检测
+					var data2 = [];	//已检测
+					var data3 = [];	//待结果
+					var data4 = [];	//已结束
+					var data5 = [];	//预留
+					for(var i=0;i<data.length;i++){
+						data[i].key = i;
+						if(data[i].status=="2"){
+							data1.push(data[i]);
+						}else if(data[i].status=="3"){
+							data2.push(data[i]);
+						}else if(data[i].status=="4"){
+							data3.push(data[i]);
+						}else if(data[i].status=="5"){
+							data4.push(data[i]);
+						}
+					}
+		if(!data1.length){
+			data1 = [{key:"待检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data2.length){
+			data2 = [{key:"已检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data3.length){
+			data3 = [{key:"待结果无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data4.length){
+			data4 = [{key:"已结束无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}else if(!data5.length){
+			data5 = [{key:"待审核无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
+		}
+					this.data1 = data1;
+					this.data2 = data2;
+					this.data3 = data3;
+					this.data4 = data4;
+					this.data5 = data5;
+				})
+				
+			})
+		})
 		
 	}
 	async _getUid(){
@@ -274,13 +469,13 @@ export default class HomeScreen extends React.Component{
 			popOut:0
 		}));
 		//获取用户uid
-		AsyncStorage.getItem('uid').then(function(uid){
+		AsyncStorage.getItem('uid').then((uid)=>{
 			I.uid = uid;
 		}).then(()=>{
 			SQLite.openDatabase({name:"sdy.db"}).then((DB)=>{
 				sdyDb = DB;
 				//创建一个企业信息表
-				sdyDb.transaction(function(tx){
+				sdyDb.transaction((tx)=>{
 					tx.executeSql(
 					`CREATE TABLE IF NOT EXISTS comInfo(
 						use_company_id TEXT PRIMARY KEY,
@@ -294,13 +489,46 @@ export default class HomeScreen extends React.Component{
 						FOREIGN KEY(usrid) REFERENCES sysusr(uid)
 					)`).then(([txt,result])=>{
 						//成功创建一个企业信息表
-						//console.warn(result);
 					},function(err){console.warn("啊哦，失败咯"+err)}).catch((error)=>{Alert.alert("执行SQL失败"+error)});
 				},function(err){}).catch((error)=>{console.log('数据创建失败'+error)});
+				//创建工单列表;
+				sdyDb.transaction((tx)=>{
+					tx.executeSql(
+					`CREATE TABLE IF NOT EXISTS orderList(
+						test_task_work_order_id TEXT PRIMARY KEY,
+						use_company_contact TEXT,
+						use_company_mobile_phone TEXT,
+						use_order_type TEXT,
+						test_task_id TEXT,
+						boiler_id TEXT,
+						team_users TEXT,
+						status	TEXT,	
+						plan_test_date	TEXT,
+						order_leader	TEXT,
+						allocation_user TEXT,
+						allocation_time TEXT,
+						alllcation_remark TEXT,
+						use_company_id TEXT DEFAULT NULL,
+						FOREIGN KEY (use_company_id) REFERENCES comInfo(use_company_id),
+						FOREIGN KEY (boiler_id) REFERENCES deviceList(boiler_id)
+					)`).then(([txt,result])=>{
+						//console.warn(result);
+					})
+				});
+				//创建设备列表;
+				sdyDb.transaction((tx)=>{
+					tx.executeSql(
+					`CREATE TABLE IF NOT EXISTS deviceList(
+						boiler_id TEXT PRIMARY KEY,
+						device_code TEXT,
+						device_model TEXT
+					)`).then(([txt,result])=>{
+						//console.warn(result);
+					})
+				});
 			})
 		}).then(()=>{
-			//30.APP测试任务工单
-			//console.warn(I.uid);
+			//32.APP企业列表
 			fetch(apiHost+"/app/testTask/listTestTaskCompany.do",{
 				method:"POST",
 				headers:{"Content-Type":"application/x-www-form-urlencoded"},
@@ -312,12 +540,41 @@ export default class HomeScreen extends React.Component{
 							I.handleData(jsn.data);
 						}else{
 							Alert.alert(jsn.message);
+							I.offlinesupport();
 						}
 					});
 				}else{
 					Alert.alert(res.statusText);
+					I.offlinesupport();
 				}
-			},(err)=>{Alert.alert('网络错误')})
+			},(err)=>{
+				Alert.alert('网络错误');
+				I.offlinesupport();
+			});
+		}).then(()=>{
+			//31.APP测试任务工单
+			fetch(apiHost+"/app/testTask/listTestTaskOrder.do",{
+				method:"POST",
+				headers:{"Content-Type":"application/x-www-form-urlencoded"},
+				body:"userid="+I.uid
+			}).then((ress)=>{
+				if(ress.ok){
+					ress.json().then(jn=>{
+						if(jn.result=="1"){
+							I.handleOrderData(jn.data);
+						}else{
+							Alert.alert(jn.message);
+							this.offlinesupports();
+						}
+					})
+				}else{
+					Alert.alert(ress.statusText);
+					this.offlinesupports();
+				}
+			},(err)=>{
+				//网络错误;
+				this.offlinesupports();
+			})
 		})
 	}
 	componentDidUpdate(prevProps, prevState, snapshot){
@@ -332,12 +589,12 @@ export default class HomeScreen extends React.Component{
 		*/
 	}
 	render(){
-		//console.warn(this.points);
-		const Undo = ({match}) => <Datalist match={match} dataList={data1} nav={this.nav}/>
-		const Todo = ({match}) => <Datalist match={match} dataList={data2} nav={this.nav}/>
-		const Doing = ({match}) => <Datalist match={match} dataList={data3} nav={this.nav}/>
-		const Did = ({match}) => <Datalist match={match} dataList={data4} nav={this.nav}/>
-		const Done = ({match}) => <Datalist match={match} dataList={data5} nav={this.nav}/>
+		//store.subscribe(() => console.warn(store.getState()));
+		const Undo = ({match}) => <Datalist match={match} dataList={this.data1} nav={this.nav}/>
+		const Todo = ({match}) => <Datalist match={match} dataList={this.data2} nav={this.nav}/>
+		const Doing = ({match}) => <Datalist match={match} dataList={this.data3} nav={this.nav}/>
+		const Did = ({match}) => <Datalist match={match} dataList={this.data4} nav={this.nav}/>
+		const Done = ({match}) => <Datalist match={match} dataList={this.data5} nav={this.nav}/>
 	function Avtars(props){
 		let nav = props.nav;
 	async function userQuilt(){
@@ -389,9 +646,9 @@ export default class HomeScreen extends React.Component{
 						})
 					}
 				>
-					
-					<Mapmakers points={this.points}/>
+				   {this.state.showMarkers?(<Mapmakers points={this.points}/>):(<Text></Text>)}
 				</MapView>
+			
 				<View style={styles.searchBar}>
 					<SearchBar
 						round
