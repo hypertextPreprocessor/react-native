@@ -46,15 +46,19 @@ var data5 = [{key:'惠州市焦点二手车市场'},{key:'汕尾市城区香洲�
 class Swipers extends React.Component{
 	constructor(props){
 		super(props);
+		this.orderDetailPanel = this.orderDetailPanel.bind(this);
+		this.state={
+			panelData:[]
+		}
 	}
-	componentDidMount(){
-		//console.warn(this.props.comid);
-		//console.warn(store.getState());
-		//store.subscribe(() => console.warn(store.getState()));
+	navToDetail(ttwoid){
+		this.props.nav('preparar',{
+			ttwoid:ttwoid
+		});
 	}
-	render(){
-		return(
-			<Swiper style={styles.wrapper} showsButtons={false}>
+	orderDetailPanel(){	//工单详情面板;
+		//if(this.state.panelData.length){};
+			const orderPanel = this.state.panelData.map((item,index)=>(
 				<View style={styles.slide1}>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>测试类型</Text>
@@ -62,39 +66,60 @@ class Swipers extends React.Component{
 					</View>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>设备型号</Text>
-						<Text style={styles.textx}>KD-123</Text>
+						<Text style={styles.textx}>{item.device_model}</Text>
 					</View>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>预约时间</Text>
-						<Text style={styles.textx}>2018年9月28日</Text>
+						<Text style={styles.textx}>{item.plan_test_date}</Text>
 					</View>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>联系人</Text>
-						<Text style={styles.textx}>汤蔺</Text>
+						<Text style={styles.textx}>{item.use_company_contact}</Text>
 					</View>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>联系电话</Text>
 						<TouchableOpacity onPress={()=>{
-							Linking.openURL(`tel:${`15920419705`}`)
+							Linking.openURL(`tel:${item.use_company_mobile_phone}`)
 						}} style={styles.textx}>
-						<Text style={{textDecorationLine:"underline"}}>15920419705</Text>
+						<Text style={{textDecorationLine:"underline"}}>{item.use_company_mobile_phone}</Text>
 						</TouchableOpacity>
 					</View>
 					<View style={styles.slideSub}>
 						<Button bordered style={styles.gdbtn}>
 							<Text style={{...styles.gdbtnText,color:'#259BD8'}}>到这里去</Text>
 						</Button>
-						 <Button primary style={{...styles.gdbtn,backgroundColor:'#259BD8'}}>
+						 <Button primary style={{...styles.gdbtn,backgroundColor:'#259BD8'}} onPress={()=>{this.navToDetail(`${item.test_task_work_order_id}`)}}>
 							<Text style={{...styles.gdbtnText,color:'#fff'}}>领取此单</Text>
 						</Button>
 					</View>
 				</View>
-				<View style={styles.slide2}>
-				  <Text style={styles.text}>Beautiful</Text>
-				</View>
-				<View style={styles.slide3}>
-				  <Text style={styles.text}>And simple</Text>
-				</View>
+			));
+			return orderPanel;
+		
+		
+	}
+	componentDidMount(){
+		//console.warn(this.props.comid);
+		//console.warn(store.getState());
+		//store.subscribe(() => console.warn(store.getState()));
+		var panelData=[];
+		AsyncStorage.getItem('uid').then((uid)=>{
+			sdyDb.transaction((tx)=>{
+				tx.executeSql(`SELECT * FROM orderList INNER JOIN deviceList ON orderList.boiler_id = deviceList.boiler_id WHERE order_leader = '${uid}' AND use_company_id='${this.props.comid}'`).then(([txt,result])=>{
+					for(var i=0;i<result.rows.length;i++){
+						panelData.push(result.rows.item(i));
+					}
+					this.setState({
+						panelData:panelData
+					})
+				})
+			})
+		});
+	}
+	render(){
+		return(
+			<Swiper style={styles.wrapper} showsButtons={false}>
+				{this.orderDetailPanel()}
 			</Swiper>
 		)
 	}
@@ -108,14 +133,16 @@ class Mapmakers extends React.Component{
 		this.state={
 			upd:"",
 			comid:[],
+			act:[],
+			actColor:[],
 		}
 	}
 	markers(){
 		if(this.state.comid.length){
 			const listItems = this.points.map((item,idx)=>(
-				<MapView.Marker image='flag' coordinate={item} key={idx}>
+				<MapView.Marker coordinate={item} key={idx} active={Boolean(this.state.act[idx])} color={this.state.actColor[idx]} >
 					<View style={styles.customInfoWindow}>
-						<Swipers comid={this.state.comid[idx]}/>
+						<Swipers comid={this.state.comid[idx]} nav={this.props.nav}/>
 					</View>
 				</MapView.Marker>
 			))
@@ -125,12 +152,16 @@ class Mapmakers extends React.Component{
 	componentDidMount(){
 		var latlong=[];
 		var comID=[];
+		var act = [];
+		var actColor = [];
 		SQLite.openDatabase({name:"sdy.db"}).then((DB)=>{
 			DB.transaction((tx)=>{
 				tx.executeSql(`SELECT * FROM comInfo`).then(([txt,result])=>{
 					for(var i=0;i<result.rows.length;i++){
 						latlong.push({latitude:Number(result.rows.item(i).use_company_latitude),longitude:Number(result.rows.item(i).use_company_longitude)})
 						comID.push(result.rows.item(i).use_company_id);
+						act.push(false);
+						actColor.push("blue");
 					}
 					this.points = latlong;
 					return [latlong,comID];
@@ -138,7 +169,9 @@ class Mapmakers extends React.Component{
 					//this.markers(latlong);
 					this.setState({
 						upd:"potted",
-						comid:comID
+						comid:comID,
+						act:act,
+						actColor:actColor
 					})
 				});
 			}).catch((err)=>{console.warn(err)});
@@ -149,6 +182,31 @@ class Mapmakers extends React.Component{
 		//console.warn(this.state.upd);
 	}
 	render(){
+		store.subscribe(() =>{
+			//console.warn(store.getState().sheetList.item);
+			//点击子菜单标记对应的地图标点
+			if(store.getState().sheetList.item !== undefined){
+				var {item} = store.getState().sheetList;
+				if(item.use_company_latitude !== undefined){
+					var activeIndex = this.state.comid.indexOf(item.use_company_id);
+					var tem = [];
+					var temColor=[];
+					for(var i=0;i<this.state.act.length;i++){
+						if(i == activeIndex){
+							tem.push(true);
+							temColor.push("blue");
+						}else{
+							tem.push(false);
+							temColor.push("green");
+						}
+					}
+					this.setState({
+						act:tem,
+						actColor:temColor
+					})
+				}
+			}
+		});
 		return (
 			<View>
 				{this.markers()}
@@ -385,13 +443,17 @@ export default class HomeScreen extends React.Component{
 		}
 		if(!data1.length){
 			data1 = [{key:"待检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data2.length){
+		}
+		if(!data2.length){
 			data2 = [{key:"已检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data3.length){
+		}
+		if(!data3.length){
 			data3 = [{key:"待结果无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data4.length){
+		}
+		if(!data4.length){
 			data4 = [{key:"已结束无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data5.length){
+		}
+		if(!data5.length){
 			data5 = [{key:"待审核无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
 		}
 		this.data1 = data1;
@@ -435,13 +497,17 @@ export default class HomeScreen extends React.Component{
 					}
 		if(!data1.length){
 			data1 = [{key:"待检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data2.length){
+		}
+		if(!data2.length){
 			data2 = [{key:"已检测无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data3.length){
+		}
+		if(!data3.length){
 			data3 = [{key:"待结果无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data4.length){
+		}
+		if(!data4.length){
 			data4 = [{key:"已结束无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
-		}else if(!data5.length){
+		}
+		if(!data5.length){
 			data5 = [{key:"待审核无数据",device_model:"没有记录",use_company_contact:"",use_company_mobile_phone:""}]
 		}
 					this.data1 = data1;
@@ -588,8 +654,25 @@ export default class HomeScreen extends React.Component{
 		}
 		*/
 	}
+	componentWillUnmount(){
+		this.closeDatabase();
+	}
 	render(){
-		//store.subscribe(() => console.warn(store.getState()));
+		store.subscribe(() =>{
+			//console.warn(store.getState().sheetList.item);
+			if(store.getState().sheetList.item !== undefined){
+				var {item} = store.getState().sheetList;
+				if(item.use_company_latitude !== undefined){
+					this.setState({
+						CenLatitude:Number(item.use_company_latitude),
+						CenLongitude:Number(item.use_company_longitude)
+					})
+				}
+			}
+			
+			
+		
+		});
 		const Undo = ({match}) => <Datalist match={match} dataList={this.data1} nav={this.nav}/>
 		const Todo = ({match}) => <Datalist match={match} dataList={this.data2} nav={this.nav}/>
 		const Doing = ({match}) => <Datalist match={match} dataList={this.data3} nav={this.nav}/>
@@ -646,7 +729,7 @@ export default class HomeScreen extends React.Component{
 						})
 					}
 				>
-				   {this.state.showMarkers?(<Mapmakers points={this.points}/>):(<Text></Text>)}
+				   {this.state.showMarkers?(<Mapmakers points={this.points} nav={this.nav}/>):(<Text></Text>)}
 				</MapView>
 			
 				<View style={styles.searchBar}>

@@ -7,6 +7,8 @@ import {
 	Dimensions
 } from 'react-native';
 import { NativeRouter,Route,Link } from 'react-router-native';
+import SQLite from 'react-native-sqlite-storage';
+import { config } from '../config.js';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text,Tabs,Tab,ScrollableTab } from 'native-base';
 import {
 	Text as Txt,
@@ -17,6 +19,9 @@ import Tab1 from './TabOne';
 import Tab2 from './TabTwo';
 import Tab3 from './TabThree';
 import Tab4 from './TabFour';
+SQLite.DEBUG(true);
+SQLite.enablePromise(true);
+let sdyDb;
 const MyTitle = ()=> {
 	return (
 			<View>
@@ -35,6 +40,8 @@ export default class caseDetailScreen extends React.Component{
 	}
 	componentDidMount(){
 		this.props.navigation.setParams({dat:this.state.data});
+		const thistestorderid = this.props.navigation.getParam("ttwoid");
+		//console.warn(thistestorderid);
 	}
 	tabChange(){
 		Orientation.unlockAllOrientations();
@@ -56,7 +63,7 @@ export default class caseDetailScreen extends React.Component{
 				<Container>
 					<Header hasTabs>
 						<Left>
-							<Button hasText transparent>
+							<Button hasText transparent onPress={()=>{this.props.navigation.goBack()}}>
 								<Icon name='arrow-back' />
 							</Button>
 						</Left>

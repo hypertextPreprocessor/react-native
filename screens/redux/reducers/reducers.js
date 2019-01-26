@@ -1,6 +1,7 @@
 //import config from '../../../config';
 const initialState1 = {
-	Msg:'没有数据'
+	Msg:'没有数据',
+	item:{},
 };
 const initialState2 = {
 	menuIcon:[
@@ -16,11 +17,10 @@ export function sheetList(state = initialState1,action){
 	switch(action.type){
 		case 'LIST_ALL':
 		state = {
-			Msg:'所有工单数据列表'
+			Msg:'所有工单数据列表',
+			item:action.item
 		}
-		return {
-			state
-		}
+		return state
 		default:
 			return state;
 	}

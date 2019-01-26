@@ -33,7 +33,7 @@ class Datalist extends React.Component{
 	}
 	nvt(item){
 		//console.warn(this.props);
-		store.dispatch({type:"LIST_ALL"});
+		store.dispatch({type:"LIST_ALL",item:item});
 		//store.subscribe(() => console.warn(store.getState()));
 	}
 	componentDidMount(){
