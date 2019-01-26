@@ -24,6 +24,7 @@ project.xcworkspace
 
 # Android/IntelliJ
 #
+
 build/
 .idea
 .gradle
@@ -54,3 +55,6 @@ buck-out/
 
 # Bundle artifact
 *.jsbundle
+android
+package-lock.json
+package.json
