@@ -13,6 +13,7 @@ import {
 	Alert,
 	FlatList,
 	Linking,
+	ActionSheetIOS,
 	SectionList,
 	TouchableOpacity,
 	StatusBar,
@@ -32,7 +33,7 @@ import Menulist from './menulist';
 import SQLite from 'react-native-sqlite-storage';
 import { config } from '../config.js';
 import Swiper from 'react-native-swiper';
-import { Button } from 'native-base';
+import { Root,Button,ActionSheet } from 'native-base';
 SQLite.DEBUG(true);
 SQLite.enablePromise(true);
 let sdyDb;
@@ -85,11 +86,21 @@ class Swipers extends React.Component{
 						</TouchableOpacity>
 					</View>
 					<View style={styles.slideSub}>
-						<Button bordered style={styles.gdbtn}>
+						<Button bordered style={styles.gdbtn} onPress={()=>{
+							ActionSheet.show({
+								options:[{text:"高德地图"},{text:"取消"}],
+								cancelButtonIndex:1,
+								destructiveButtonIndex:0,
+								title:"选择需要导航的地图"
+							},buttonIndex=>{
+								//console.warn(item);
+								Linking.openURL(`androidamap://navi?sourceApplication=com.sdyapp&poiname=${item.company_address}&lat=${item.use_company_latitude}&lon=${item.use_company_longitude}&dev=1&style=2`);
+							})
+						}}>
 							<Text style={{...styles.gdbtnText,color:'#259BD8'}}>到这里去</Text>
 						</Button>
 						 <Button primary style={{...styles.gdbtn,backgroundColor:'#259BD8'}} onPress={()=>{this.navToDetail(`${item.test_task_work_order_id}`)}}>
-							<Text style={{...styles.gdbtnText,color:'#fff'}}>领取此单</Text>
+							<Text style={{...styles.gdbtnText,color:'#fff'}}>查看工单</Text>
 						</Button>
 					</View>
 				</View>
@@ -105,7 +116,14 @@ class Swipers extends React.Component{
 		var panelData=[];
 		AsyncStorage.getItem('uid').then((uid)=>{
 			sdyDb.transaction((tx)=>{
-				tx.executeSql(`SELECT * FROM orderList INNER JOIN deviceList ON orderList.boiler_id = deviceList.boiler_id WHERE order_leader = '${uid}' AND use_company_id='${this.props.comid}'`).then(([txt,result])=>{
+				tx.executeSql(`
+				SELECT orderList.*,comInfo.use_company_latitude,comInfo.use_company_longitude,deviceList.*
+				FROM orderList INNER JOIN comInfo
+				ON orderList.use_company_id = comInfo.use_company_id
+				INNER JOIN deviceList
+				ON orderList.boiler_id = deviceList.boiler_id 
+				WHERE orderList.order_leader = '${uid}' AND orderList.use_company_id='${this.props.comid}'
+				`).then(([txt,result])=>{
 					for(var i=0;i<result.rows.length;i++){
 						panelData.push(result.rows.item(i));
 					}
@@ -214,7 +232,7 @@ class Mapmakers extends React.Component{
 		)
 	}
 }
-export default class HomeScreen extends React.Component{
+class HomeScreen extends React.Component{
 	constructor(props){
 		super(props);
 		const {navigate} = this.props.navigation;
@@ -368,7 +386,7 @@ export default class HomeScreen extends React.Component{
 				
 			}).catch((error)=>{console.warn(error)});
 			for(var i=0;i<data.length;i++){
-				(function(i){
+				(function(i){	//若对设备有更改需求，需要先update再insert
 					sdyDb.transaction((tx)=>{
 						tx.executeSql(
 							`INSERT INTO deviceList (boiler_id,device_code,device_model) VALUES (
@@ -699,6 +717,7 @@ export default class HomeScreen extends React.Component{
 		)
 	}
 		return (
+		<Root>
 			<Provider store={store}>
 		<NativeRouter>
 		   
@@ -815,6 +834,8 @@ export default class HomeScreen extends React.Component{
 			
 		</NativeRouter>
 		</Provider>
+		</Root>
 		)
 	}
 }
+export default HomeScreen;

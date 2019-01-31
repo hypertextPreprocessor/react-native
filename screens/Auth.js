@@ -43,7 +43,7 @@ export default class AuthScreen extends React.Component{
 	_bootstrapAsync = async()=>{
 	  const userToken = await AsyncStorage.getItem('uid');
 	  if(userToken){
-			this.nav("Main");
+			this.nav("Main"); //this.nav("Main");
 	  }else{
 		  this.vcode();
 	  }
