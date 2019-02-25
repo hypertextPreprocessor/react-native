@@ -17,6 +17,7 @@ import {
 	TouchableOpacity
 	
 } from 'react-native';
+import { Image as Img } from 'react-native-elements';
 import { config } from '../config.js';
 import SQLite from 'react-native-sqlite-storage';
 SQLite.DEBUG(true);
@@ -56,11 +57,11 @@ export default class AuthScreen extends React.Component{
 	_login(){
 		var telReg = !!this.state.text.match(/^(0|86|17951)?(13[0-9]|15[012356789]|17[678]|18[0-9]|14[57])[0-9]{8}$/);
 		if(this.state.text==""){
-			Alert.alert('电话号码不能为空!');
+			Alert.alert('电话号/账号码不能为空!');
 			return false;
-		}else if(telReg==false){
-			Alert.alert('电话号码格式不正确!');
-			return false;
+		//}else if(telReg==false){
+		//	Alert.alert('电话号码格式不正确!');
+		//	return false;
 		}else if(this.state.textpwd==""){
 			Alert.alert('密码不能为空!');
 			return false;
@@ -195,7 +196,6 @@ export default class AuthScreen extends React.Component{
 		
 	}
 	render(){
-		//const {navigate} = this.props.navigation;
 		return (
 			<ImageBackground source={require('../images/Login-background.png')} style={styles.container}>
 				<KeyboardAvoidingView style={styles.kav} enabled >
@@ -231,7 +231,7 @@ export default class AuthScreen extends React.Component{
 						<TouchableOpacity onPress={(e)=>{this.vcode(e)}} style={{width:65,height: 35,position:'absolute',left:'80%',top:'22%'}} >
 							<Image source={{
 								uri:this.state.vImage
-							}} style={{width:85,height: 35}}
+							}} style={{width:85,height: 35,right:18}}
 							/>
 						</TouchableOpacity>
 							

@@ -6,6 +6,7 @@ import AuthScreen from './screens/Auth';
 import caseDetailScreen from './screens/caseDetailScreen';
 import prepararScreen from './screens/prepararScreen';
 import Datalist from './screens/datas';
+import Modal from './screens/Modal';
 import SignatureView from "react-native-signature";
 import { config } from './config.js';
 
@@ -22,9 +23,12 @@ const myApp = createStackNavigator({
 	Home:HomeScreen,
 	caseDetail:caseDetailScreen,
 	preparar:prepararScreen,
-	SignatureView:SignatureView
+	SignatureView:SignatureView,
+	modal:Modal
 },{
-	initialRouteName:"Home"
+	initialRouteName:"Home",
+	mode:'modal',
+	headerMode:'none'
 });
 //登录注册页面组件注册处
 const AuthStack = createStackNavigator({Auth:AuthScreen},{
@@ -51,7 +55,7 @@ const Root = createSwitchNavigator({
     screen: AuthStack,
   },
 }, {
-    initialRouteName: 'Idvfy',
+    initialRouteName: 'Idvfy'
 });
 const AppContainer=createNavigationContainer(Root);
 

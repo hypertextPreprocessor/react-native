@@ -12,6 +12,8 @@ class Tab1 extends Component{
 		super(props);
 		this.state = {
 		  selected: "01",
+		  fellows:"加载中...",
+		  charger:"加载中...",
 		  tabData:{
 			  testNum:'加载中...',
 			  testType:'01',
@@ -38,6 +40,7 @@ onValueChange(value: string) {
 }
 loadData(){
 	var arr = [];
+	var brr = [];
 	SQLite.openDatabase({name:'sdy.db'}).then((DB)=>{	
 	sdyDb = DB;	
 	sdyDb.transaction((tx)=>{
@@ -46,7 +49,7 @@ loadData(){
 				arr.push(result.rows.item(i));
 			}
 			var obj = {
-				testNum:arr[0].test_task_work_order_num,
+				testNum:"GDSEI/RXN-17-2.00",//arr[0].test_task_work_order_num,
 				testType:'01',
 				orgUtilize:arr[0].use_company_name,
 				boilerType:arr[0].device_model,
@@ -61,9 +64,79 @@ loadData(){
 			this.setState({
 				tabData:obj
 			})
+			return obj;
+		}).then((obj)=>{
+			sdyDb.transaction((tx)=>{
+				tx.executeSql(`SELECT * FROM orderList INNER JOIN comInfo ON orderList.use_company_id = comInfo.use_company_id WHERE test_task_work_order_id = '${this.props.ready}'`).then(([txt,result])=>{
+					for(var i=0;i<result.rows.length;i++){
+						brr.push(result.rows.item(i));
+					}
+					var o = obj;
+					o.customer = brr[0].use_company_contact;
+					o.testCharger = "加载中...";//brr[0].order_leader;
+					o.fellows = "加载中...";//brr[0].team_users;
+					o.applyDate = brr[0].apply_date;
+					o.appointmentPhone = brr[0].plan_test_date;
+					o.testAddr = brr[0].company_address;
+					o.customerPhone = brr[0].use_company_mobile_phone;
+					//console.warn(o);
+					this.setState({
+						tabData:o
+					})
+					this.getUsrById(brr[0].order_leader);
+					this.getUsrById(brr[0].team_users.split(","));
+				})
+			})
 		})
 	})	
 	});
+}
+//根据用户id查询姓名;
+getUsrById(ids){
+	var usrs = [];
+	sdyDb.transaction((tx)=>{
+		tx.executeSql(`SELECT * FROM users`).then(([txt,result])=>{
+			for(var i=0;i<result.rows.length;i++){
+				usrs.push(result.rows.item(i));
+			}
+			return usrs;
+		}).then((u)=>{
+			if(typeof ids == "string"){
+				u.forEach((v,i,a)=>{
+					if(v.user_id == ids){
+						this.setState({
+							charger:v.name
+						})
+						return v.name;
+					}
+				})
+			}else if(/Array/g.test(Object.prototype.toString.call(ids))){
+				var usrArr = [];
+				ids.forEach((v,i,a)=>{
+					u.forEach((vv,ii,aa)=>{
+						if(v == vv.user_id){
+							//console.warn(vv.name);
+							usrArr.push(vv.name);
+							this.setState({
+								fellows:usrArr
+							})
+							return usrArr;
+						}
+					})
+				})
+			}else{
+				//参数格式错误！！
+			}
+		})
+	});
+}
+closeDatabase(){
+	if(sdyDb){
+		console.log("closeing database...");
+		sdyDb.close().then((status)=>{
+			console.log("数据库关闭");
+		}).catch((error)=>{console.log("无法关闭原因"+error)});
+	}
 }
 componentDidUpdate(prevProps, prevState, snapshot){
 	if(this.props.ready !== prevProps.ready){
@@ -84,6 +157,9 @@ componentDidMount(){
 	})
 	*/
 }
+componentWillUnmount(){
+	this.closeDatabase();
+}
 	render(){
 		return (
 		<View>
@@ -94,9 +170,12 @@ componentDidMount(){
 					<Grid>
 						<Col>
 							<Row><Text style={styles.tabTitle}>质量体系文件编号：</Text><Text style={styles.tabCon}>{this.state.tabData.testNum}</Text></Row>
-							<Row><Text style={styles.tabTitle}>锅炉使用单位：</Text><Text style={styles.tabCon}>{this.state.tabData.orgUtilize}</Text></Row>
-						</Col>
-						<Col>
+							<Row>
+								<Text style={styles.tabTitle}>锅炉型号：</Text>
+								<Item inlineLabel style={{width:'50%'}}>
+									<Input placeholder='请输入锅炉型号' value={this.state.tabData.boilerType}/>
+								</Item>
+							</Row>
 							<Row>
 								<Text style={styles.tabTitle}>测试类型：</Text>
 								<Picker
@@ -112,12 +191,7 @@ componentDidMount(){
 									<Picker.Item label="定型产品热效率测试" value="03" />				
 								</Picker>
 							</Row>
-							<Row>
-								<Text style={styles.tabTitle}>锅炉型号：</Text>
-								<Item inlineLabel style={{width:'50%'}}>
-									<Input placeholder='请输入锅炉型号' value={this.state.tabData.boilerType}/>
-								</Item>
-							</Row>
+							<Row><Text style={styles.tabTitle}>锅炉使用单位：</Text><Text style={styles.tabCon}>{this.state.tabData.orgUtilize}</Text></Row>
 						</Col>
 					</Grid>
 				</View>
@@ -131,14 +205,14 @@ componentDidMount(){
 					<Grid>
 						<Col>
 							<Row><Text style={styles.tabTitle}>客户联系人：</Text><Text style={styles.tabCon}>{this.state.tabData.customer}</Text></Row>
-							<Row><Text style={styles.tabTitle}>检测负责人：</Text><Text style={styles.tabCon}>{this.state.tabData.testCharger}</Text></Row>
+							<Row><Text style={styles.tabTitle}>客户联系电话：</Text><Text style={styles.tabCon}>{this.state.tabData.customerPhone}</Text></Row>
 						</Col>
 						<Col>
+							<Row><Text style={styles.tabTitle}>检测负责人：</Text><Text style={styles.tabCon}>{this.state.charger}</Text></Row>
 							<Row>
 								<Text style={styles.tabTitle}>检测小组员工：</Text>
-								<Text style={styles.tabCon}>{this.state.tabData.fellows}</Text>
+								<Text style={styles.tabCon}>{this.state.fellows.toString()}</Text>
 							</Row>
-							<Row></Row>
 						</Col>
 					</Grid>
 				</View>
@@ -151,12 +225,16 @@ componentDidMount(){
 				<View style={styles.verlist}>
 					<Grid>
 						<Col>
-							<Row><Text style={styles.tabTitle}>申请时间：</Text><Text style={styles.tabCon}>{this.state.tabData.applyDate}</Text></Row>
+							<Row><Text style={styles.tabTitle}>申请日期：</Text><Text style={styles.tabCon}>{this.state.tabData.applyDate}</Text></Row>
+							<Row><Text style={styles.tabTitle}>预约上门日期：</Text><Text style={styles.tabCon}>{this.state.tabData.appointmentPhone}</Text></Row>
 							<Row><Text style={styles.tabTitle}>检测地址：</Text><Text style={styles.tabCon}>{this.state.tabData.testAddr}</Text></Row>
 						</Col>
+					</Grid>
+				</View>
+				<View style={styles.verlist}>
+					<Grid>
 						<Col>
-							<Row><Text style={styles.tabTitle}>预约上门电话：</Text><Text style={styles.tabCon}>{this.state.tabData.appointmentPhone}</Text></Row>
-							<Row><Text style={styles.tabTitle}>客户联系电话：</Text><Text style={styles.tabCon}>{this.state.tabData.customerPhone}</Text></Row>
+							
 						</Col>
 					</Grid>
 				</View>

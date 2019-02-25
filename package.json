@@ -10,10 +10,10 @@
   "dependencies": {
     "@babel/runtime": "^7.1.2",
     "native-base": "^2.10.0",
+    "native-echarts": "^0.5.0",
     "react": "16.5.0",
     "react-native": "^0.57.1",
     "react-native-amap3d": "^1.0.2",
-    "react-native-baidumap-sdk": "^0.6.0",
     "react-native-elements": "^0.19.1",
     "react-native-gesture-handler": "^1.0.12",
     "react-native-maps": "^0.22.0",

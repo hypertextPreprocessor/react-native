@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
 	Platform,
+	NetInfo,
 	AsyncStorage,
 	StyleSheet,
 	View,Button as Btnn,Image,
@@ -60,7 +61,7 @@ class Swipers extends React.Component{
 	orderDetailPanel(){	//工单详情面板;
 		//if(this.state.panelData.length){};
 			const orderPanel = this.state.panelData.map((item,index)=>(
-				<View style={styles.slide1}>
+				<View style={styles.slide1} key={index}>
 					<View style={styles.slideSub}>
 						<Text style={styles.textx}>测试类型</Text>
 						<Text style={styles.textx}>热效率简单测试</Text>
@@ -93,8 +94,11 @@ class Swipers extends React.Component{
 								destructiveButtonIndex:0,
 								title:"选择需要导航的地图"
 							},buttonIndex=>{
-								//console.warn(item);
+								if(buttonIndex == 0){
 								Linking.openURL(`androidamap://navi?sourceApplication=com.sdyapp&poiname=${item.company_address}&lat=${item.use_company_latitude}&lon=${item.use_company_longitude}&dev=1&style=2`);
+								}else{
+									
+								}
 							})
 						}}>
 							<Text style={{...styles.gdbtnText,color:'#259BD8'}}>到这里去</Text>
@@ -168,6 +172,7 @@ class Mapmakers extends React.Component{
 		}
 	}
 	componentDidMount(){
+		var {apiHost} = config;
 		var latlong=[];
 		var comID=[];
 		var act = [];
@@ -193,7 +198,41 @@ class Mapmakers extends React.Component{
 					})
 				});
 			}).catch((err)=>{console.warn(err)});
-			
+			DB.transaction((tx)=>{
+				tx.executeSql(`CREATE TABLE IF NOT EXISTS users (
+					handwritten_signature_pic TEXT,
+					name TEXT,
+					user_id TEXT PRIMARY KEY
+				)`).then(([txt,result])=>{
+					DB.transaction((tx)=>{tx.executeSql(`DELETE FROM users`)});
+					fetch(apiHost+"/app/user/listUser.do",{
+						method:"POST",
+						headers:{"Content-Type":"application/x-www-form-urlencoded"},
+						body:""
+					}).then((res)=>{
+						if(res.ok){
+							res.json().then(jsn=>{
+								if(jsn.result=="1"){
+									for(var i=0;i<jsn.data.length;i++){
+										(function(i){
+											//console.warn(jsn.data[i].name);
+											DB.transaction((tx)=>{
+												tx.executeSql(`INSERT INTO users (handwritten_signature_pic,name,user_id) VALUES (
+													'${jsn.data[i].handwritten_signature_pic}',
+													'${jsn.data[i].name}',
+													'${jsn.data[i].user_id}'
+												)`).then(([txt,result])=>{}).catch((error)=>{});
+											}).catch((error)=>{});
+										})(i)
+									}
+								}else{
+									Alert.alert(jsn.message);
+								}
+							})
+						}
+					})
+				})
+			})
 		});
 	}
 	componentDidUpdate(){
@@ -433,6 +472,7 @@ class HomeScreen extends React.Component{
 						team_users,
 						status,
 						plan_test_date,
+						apply_date,
 						order_leader,
 						allocation_user,
 						allocation_time,
@@ -448,6 +488,7 @@ class HomeScreen extends React.Component{
 							'${data[i].team_users}',
 							'${data[i].status}',
 							'${data[i].plan_test_date}',
+							'${data[i].apply_date}',
 							'${data[i].order_leader}',
 							'${data[i].allocation_user}',
 							'${data[i].allocation_time}',
@@ -576,29 +617,34 @@ class HomeScreen extends React.Component{
 					},function(err){console.warn("啊哦，失败咯"+err)}).catch((error)=>{Alert.alert("执行SQL失败"+error)});
 				},function(err){}).catch((error)=>{console.log('数据创建失败'+error)});
 				//创建工单列表;
-				sdyDb.transaction((tx)=>{
-					tx.executeSql(
-					`CREATE TABLE IF NOT EXISTS orderList(
-						test_task_work_order_id TEXT PRIMARY KEY,
-						use_company_contact TEXT,
-						use_company_mobile_phone TEXT,
-						use_order_type TEXT,
-						test_task_id TEXT,
-						boiler_id TEXT,
-						team_users TEXT,
-						status	TEXT,	
-						plan_test_date	TEXT,
-						order_leader	TEXT,
-						allocation_user TEXT,
-						allocation_time TEXT,
-						alllcation_remark TEXT,
-						use_company_id TEXT DEFAULT NULL,
-						FOREIGN KEY (use_company_id) REFERENCES comInfo(use_company_id),
-						FOREIGN KEY (boiler_id) REFERENCES deviceList(boiler_id)
-					)`).then(([txt,result])=>{
-						//console.warn(result);
-					})
-				});
+				//sdyDb.transaction((tx)=>{
+					//tx.executeSql(`DROP TABLE IF EXISTS orderList`).then(([txt,result])=>{
+						sdyDb.transaction((tx)=>{
+							tx.executeSql(
+							`CREATE TABLE IF NOT EXISTS orderList(
+								test_task_work_order_id TEXT PRIMARY KEY,
+								use_company_contact TEXT,
+								use_company_mobile_phone TEXT,
+								use_order_type TEXT,
+								test_task_id TEXT,
+								boiler_id TEXT,
+								team_users TEXT,
+								status	TEXT,	
+								plan_test_date	TEXT,
+								apply_date	TEXT,
+								order_leader	TEXT,
+								allocation_user TEXT,
+								allocation_time TEXT,
+								alllcation_remark TEXT,
+								use_company_id TEXT DEFAULT NULL,
+								FOREIGN KEY (use_company_id) REFERENCES comInfo(use_company_id),
+								FOREIGN KEY (boiler_id) REFERENCES deviceList(boiler_id)
+							)`).then(([txt,result])=>{
+								//console.warn(result);
+							})
+						});
+					//})
+				//});
 				//创建设备列表;
 				sdyDb.transaction((tx)=>{
 					tx.executeSql(

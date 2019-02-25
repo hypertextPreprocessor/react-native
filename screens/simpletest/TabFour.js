@@ -1,11 +1,11 @@
 import React,{Component} from 'react';
 import {View,DatePickerAndroid,Image,CameraRoll,Dimensions} from 'react-native';
-import {ListItem as Li,List,Text as Txt,Avatar,Button as Btn,SearchBar} from 'react-native-elements';
+import {ListItem as Li,List as Lis,Text as Txt,Avatar,Button as Btn,SearchBar} from 'react-native-elements';
 import { 
 Container, Header, Title, Content, Footer, FooterTab, 
 Button, Left, Right, Body, Icon, Text,Tabs,Tab,
 ScrollableTab,Card, CardItem,Grid,Col,Row,
-Item,Input,Form,Picker,
+Item,Input,Form,Picker,List,
 Radio,ListItem,CheckBox,Textarea,Accordion
 } from 'native-base';
 import { styles } from '../styles.js';
@@ -70,147 +70,155 @@ class Tab4 extends Component{
 							<View style={{flex:1,flexDirection:'row',justifyContent:'center'}}><Text style={styles.tabCon}>锅炉型号：</Text><Text style={styles.tabCon}>KD-123</Text></View>
 							<View style={{flex:1,flexDirection:'row',justifyContent:'center'}}><Text style={styles.tabCon}>产品编号：</Text><Text style={styles.tabCon}>DZ236658</Text></View>
 						</View>
-						<Grid>
-							<Col size={1} style={{border:2,borderColor:'#f00'}}><View style={{flex:1,flexDirection:'row',alignSelf:'center',justifyContent:'center'}}><Text style={styles.tabCon}>测试情况补充说明</Text></View></Col>
-							<Col size={4}>
-								<View style={{width:'100%',paddingVertical:20}}>
-									<ListItem selected={false} style={{flexDirection:'row',alignItems:'flex-start',alignContent:'flex-start'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}>
-											<Text>燃料由广东省特种设备检测研究院顺德检测院化验。</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flex:1,flexDirection:'row'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,flexDirection:'row',flexWrap:'nowrap',alignItems:'center',alignContent:'center'}}>
+						<View style={{width:'100%',paddingVertical:25}}>
+							<List>
+								<ListItem itemHeader first>
+									<Text>测试情况补充说明</Text>
+								</ListItem>
+								<ListItem icon selected={false}>
+									<Left>
+										<CheckBox checked={false} />
+									</Left>
+									<Body>
+										<Text>燃料由广东省特种设备检测研究院顺德检测院化验。</Text>
+									</Body>
+								</ListItem>
+								<ListItem icon selected={false}>
+									<Left>
+										<CheckBox checked={false} />
+									</Left>
+									<Body>
+										<View style={{width:'100%',flexDirection:'row',flexWrap:'wrap',alignContent:'center',alignItems:'center'}}>
 											<Text>燃料化验报告由</Text>
-											<Item style={{width:'40%'}}><Input placeholder="供应商"/></Item>
+											<Input placeholder="供应商"/>
 											<Text>提供。</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flex:1,flexDirection:'row'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,flexDirection:'row',flexWrap:'nowrap',alignItems:'center',alignContent:'center'}}>
+										</View>
+									</Body>
+								</ListItem>
+								<ListItem icon selected={false}>
+									<Left>
+										<CheckBox checked={false} />
+									</Left>
+									<Body>
+										<View style={{width:'100%',flexDirection:'row',flexWrap:'wrap',alignContent:'center',alignItems:'center'}}>
 											<Text>该锅炉设计燃料为</Text>
-											<Item style={{width:'40%'}}><Input placeholder="填入数值"/></Item>
+											<Input placeholder="燃料名称"/>
 											<Text>,测试期间使用燃料为</Text>
-											<Item  style={{width:'40%'}}><Input placeholder="填入数值"/></Item>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flex:1,flexDirection:'row'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,flexDirection:'row',flexWrap:'nowrap',alignItems:'center',alignContent:'center'}}><Text>与设计燃料一致</Text>
-									</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flex:1,flexDirection:'row'}}>
-										<Radio selected={false} />
-											<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}><Text>与设计燃料不一致。</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flex:1,flexDirection:'row'}}>
-										<Radio selected={false} />
-											<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}><Text>与设计燃料不一致。</Text>
-										</Right>
-									</ListItem>
-									<ListItem>
-										<View style={{width:'100%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-											<Textarea rowSpan={5} style={{width:'100%'}} bordered placeholder="备注" />
+											<Input placeholder="燃料名称"/>
 										</View>
-									</ListItem>
-								</View>
-							</Col>
-						</Grid>
-						<Grid>
-							<Col size={1}>
-								<View style={{flex:1,flexDirection:'row',alignSelf:'center',justifyContent:'center'}}>
-									<Text style={styles.tabCon}>测试结果</Text>
-								</View>
-							</Col>
-							
-							<Col size={4} style={{paddingVertical:20}}>
-								<View style={{width:'100%',flexDirection:'row',alignItems:'center',alignContent:'center'}}>
-									<Item style={{flex:1,flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-										<Text style={{flex:1,alignSelf:'center',justifyContent:'center',paddingVertical:15}}>锅炉出力</Text>
-										<Input />
-										<Text style={{flex:1,alignSelf:'center',justifyContent:'center',paddingVertical:15}}>锅炉热效率</Text>
-										<Input />
-									</Item>
-								</View>
-								<View style={{width:'100%',flexDirection:'row',alignItems:'center',alignContent:'center'}}>
-									<Item style={{flex:1,flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-										<Text style={{flex:1,alignSelf:'center',paddingVertical:15}}>排烟温度</Text>
-										<Input />
-										<Text style={{flex:1,alignSelf:'center',paddingVertical:15}}>排烟处过量空气系数</Text>
-										<Input />
-									</Item>
-								</View>
-							</Col>
-						</Grid>
-						<Grid>
-							<Col size={1}>
-								<View style={{flex:1,flexDirection:'row',alignSelf:'center',justifyContent:'center'}}>
-									<Text style={styles.tabCon}>结论分析</Text>
-								</View>
-							</Col>
-							<Col size={4}>
-								<View style={{width:'100%',paddingVertical:20}}>
-									<ListItem selected={false} style={{flexDirection:'row',alignItems:'flex-start',alignContent:'flex-start'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}>
-											<Text>锅炉热效率符合《锅炉节能技术监督管理规程》规定的工业锅炉产品热效率指标限定值的要求；</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flexDirection:'row',alignItems:'flex-start',alignContent:'flex-start'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}>
-											<Text>锅炉热效率不符合《锅炉节能技术监督管理规程》规定的工业锅炉产品热效率指标限定值的要求；</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flexDirection:'row',alignItems:'flex-start',alignContent:'flex-start'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}>
-											<Text>排烟温度和排烟处过量空气系数偏高，建议使用单位采取措施降低排烟温度和排烟处过量空气系数，如：增加烟气余热回收装置，调整配风系统等。</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flexDirection:'row',alignItems:'flex-start',alignContent:'flex-start'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}>
-											<Text>排烟温度偏高，建议使用单位采取措施降低排烟温度，如：增加烟气余热回收装置等。</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flexDirection:'row',alignItems:'flex-start',alignContent:'flex-start'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}>
-											<Text>排烟处过量空气系数偏高，建议使用单位采取措施降低排烟处过量空气系数，如：调整配风系统等。</Text>
-										</Right>
-									</ListItem>
-									<ListItem selected={false} style={{flexDirection:'row',alignItems:'flex-start',alignContent:'flex-start'}}>
-										<Radio selected={false} />
-										<Right style={{flex:1,marginLeft:12,alignItems:'flex-start',alignContent:'flex-start'}}>
+									</Body>
+								</ListItem>
+								<ListItem icon selected={false}>
+									<Left>
+										<CheckBox checked={false} />
+									</Left>
+									<Body>
+										<Text>与设计燃料一致。</Text>
+									</Body>
+								</ListItem>
+								<ListItem icon selected={false}>
+									<Left>
+										<CheckBox checked={false} />
+									</Left>
+									<Body>
+										<Text>与设计燃料不一致。</Text>
+									</Body>
+								</ListItem>
+								<ListItem icon selected={false}>
+									<Left>
+										<CheckBox checked={false} />
+									</Left>
+									<Body>
+										<View style={{width:'100%',flexDirection:'row',flexWrap:'wrap',alignContent:'center',alignItems:'center'}}>
 											<Text>其他：</Text>
-										</Right>
-									</ListItem>
-									<ListItem>
-										<View style={{width:'100%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-											<Textarea rowSpan={5} style={{width:'100%'}} bordered placeholder="其他描述内容" />
+											<Input placeholder="其他情况说明"/>
 										</View>
-									</ListItem>
+									</Body>
+								</ListItem>
+								<ListItem itemHeader>
+									<Text>测试结果</Text>
+								</ListItem>
+								<ListItem>
+									<View style={{width:'100%',flexDirection:'row',alignContent:'center',alignItems:'center'}}>
+										<View style={{width:'50%',flexDirection:'row',alignItems:'center'}}><Input placeholder="锅炉出力"/><Text>kg/h</Text></View>
+										<Text style={{color:'#999'}}>|</Text>
+										<View style={{width:'50%',flexDirection:'row',alignItems:'center'}}><Input placeholder="锅炉热效率"/><Text>%</Text></View>
+									</View>
+								</ListItem>
+								<ListItem>
+									<View style={{width:'100%',flexDirection:'row',alignContent:'center',alignItems:'center'}}>
+										<View style={{width:'50%',flexDirection:'row',alignItems:'center'}}><Input placeholder="排烟温度"/><Text>℃</Text></View>
+										<Text style={{color:'#999'}}>|</Text>
+										<View style={{width:'50%',flexDirection:'row',alignItems:'center'}}><Input placeholder="排烟处过量空气系数"/><Text>%</Text></View>
+									</View>
+								</ListItem>
+							</List>
+						</View>
+						<View style={{width:'100%',paddingVertical:25}}>
+							<ListItem itemHeader>
+								<Text>结论分析</Text>
+							</ListItem>
+							<ListItem selected={false}>
+								<CheckBox checked={false} />
+								<Body>
+									<Text>锅炉热效率符合《锅炉节能技术监督管理规程》规定的工业锅炉产品热效率指标限定值的要求；</Text>
+								</Body>
+							</ListItem>
+							<ListItem selected={false}>
+								<CheckBox checked={false} />
+								<Body>
+									<Text>锅炉热效率不符合《锅炉节能技术监督管理规程》规定的工业锅炉产品热效率指标限定值的要求；</Text>
+								</Body>
+							</ListItem>
+							<ListItem selected={false}>
+								<CheckBox checked={false} />
+								<Body>
+									<Text>排烟温度和排烟处过量空气系数偏高，建议使用单位采取措施降低排烟温度和排烟处过量空气系数，如：增加烟气余热回收装置，调整配风系统等。</Text>
+								</Body>
+							</ListItem>
+							<ListItem selected={false}>
+								<CheckBox checked={false} />
+								<Body>
+									<Text>排烟温度偏高，建议使用单位采取措施降低排烟温度，如：增加烟气余热回收装置等。</Text>
+								</Body>
+							</ListItem>
+							<ListItem selected={false}>
+								<CheckBox checked={false} />
+								<Body>
+									<Text>排烟处过量空气系数偏高，建议使用单位采取措施降低排烟处过量空气系数，如：调整配风系统等。</Text>
+								</Body>
+							</ListItem>
+							<ListItem icon selected={false}>
+								<CheckBox checked={false} />
+								<Body>
+									<View style={{width:'100%',flexDirection:'row',flexWrap:'wrap',alignContent:'center',alignItems:'center',paddingLeft:18}}>
+										<Text>其他：</Text>
+										<Input placeholder="其他情况说明"/>
+									</View>
+								</Body>
+							</ListItem>
+						</View>
+						<View style={{width:'100%',paddingVertical:25}}>
+							<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+								<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+									<Text style={styles.tabCon}>记录：</Text>
+									<Text>林锦权</Text>
 								</View>
-							</Col>
-						</Grid>
-						<View style={{...styles.table,paddingVertical:40}}>
-												<View style={{flex:0.3}}><Text>记录</Text></View>
-												<View style={{flex:0.7}}><Item><Input placeholder="记录人"/></Item></View>
-												<View style={{flex:0.3}}><Text>记录日期</Text></View>
-												<View style={{flex:0.7}}>
-													<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(0)}}><Text>{this.state.date0}</Text></Button>
-												</View>
-												<View style={{flex:0.3}}><Text>校对</Text></View>
-												<View style={{flex:0.7}}><Item><Input placeholder="校对人"/></Item></View>
-												<View style={{flex:0.3}}><Text>校对日期</Text></View>
-												<View style={{flex:0.7}}>
-													<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
-												</View>
+								<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+									<Text style={styles.tabCon}>记录日期：</Text>
+									<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
+								</View>
+							</View>
+							<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+								<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+									<Text style={styles.tabCon}>校对：</Text>
+									<Text>林锦权</Text>
+								</View>
+								<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+									<Text style={styles.tabCon}>校对日期：</Text>
+									<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
+								</View>
+							</View>
 						</View>
 					</Body>
 				</CardItem>

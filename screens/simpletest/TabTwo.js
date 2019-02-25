@@ -1,16 +1,20 @@
 import React,{Component} from 'react';
-import {View,DatePickerAndroid,Image,CameraRoll,Dimensions,ScrollView,TouchableOpacity,FlatList} from 'react-native';
-import {ListItem as Li,List,Text as Txt,Avatar,Button as Btn,SearchBar} from 'react-native-elements';
+import {View,DatePickerAndroid,Image,CameraRoll,Dimensions,ScrollView,TouchableOpacity,FlatList,ActivityIndicator} from 'react-native';
+import {ListItem as Li,List as Lst,Text as Txt,Avatar,Button as Btn,SearchBar} from 'react-native-elements';
 import { 
 Container, Header, Title, Content, Footer, FooterTab, 
 Button, Left, Right, Body, Icon, Text,Tabs,Tab,
 ScrollableTab,Card, CardItem,Grid,Col,Row,
 Item,Input,Form,Picker,Badge,
-Radio,ListItem,CheckBox,Textarea,Accordion
+Radio,ListItem,List,CheckBox,Textarea,Accordion
 } from 'native-base';
 import { styles } from '../styles.js';
 import { StackNavigator, TabNavigator } from "react-navigation";
-import Orientation from 'react-native-orientation'
+import Orientation from 'react-native-orientation';
+import SQLite from 'react-native-sqlite-storage';
+SQLite.DEBUG(true);
+SQLite.enablePromise(true);
+let sdyDb;
 const dataArray = [
   { devId: "XHX-0119",tesfun:"入炉冷空气温度",type:"TH603A",device:"温湿度表",precision: "温度测量精度：小于±1℃(-10～32℃),湿度测量精度：小于±5%(50～99%)",range:"温度:-30～60℃,湿度：0～100%RH",validity:"2019.1"},
   { devId: "XCY-0450",tesfun:"烟气成分分析",type:"OPTIMA7",device:"便携式烟气分析仪",precision: "O2:±0.2%，CO:±5ppm或±5%读数≤4000ppm,,NO:±5ppm或士5%读数≤1000ppm,SO2:±5ppm或±5%读数≤2000ppm，CO2:±2%F.S",range:"2:0~21%，CO:0~10000ppm，NO:0~2500ppm，SO2:0~5000ppm,CO2:0~40%",validity:"2019.1"},
@@ -21,13 +25,13 @@ const dataArray = [
   { devId: "(现场提供)",tesfun:"出口介质压力",type:"YB-150A",device:"压力表",precision: "-",range:"温度:-30～60℃,湿度：0～100%RH",validity:"2019.1"},
   { devId: "(现场提供)",tesfun:"其他",type:"-",device:"-",precision: "-",range:"-",validity:"-"},
 ];
-const testObject = [
-	{testItem:"入炉冷空气温度",testDevice:"温度测量仪/热电偶",testPartion:"鼓风机进风口",record:"马工",ps:"-"},
-	{testItem:"排烟温度",testDevice:"温度测量仪/热电偶",testPartion:"出口烟道一米范围内","record":"马工",ps:"-"},
-	{testItem:"烟气成分分析",testDevice:"烟气分析仪",testPartion:"出口烟道一米范围内","record":"马工",ps:"-"},
-	{testItem:"给水温度",testDevice:"温度测量仪/热电偶",testPartion:"锅炉进水管道","record":"马工",ps:"-"},
-	{testItem:"蒸汽压力",testDevice:"压力表",testPartion:"锅炉顶部压力表","record":"马工",ps:"-"},
-	{testItem:"给水压力",testDevice:"压力表",testPartion:"锅炉顶部压力表","record":"马工",ps:"-"}
+const testProjectList = [
+	{project_name:"入炉冷空气温度",instrument_name:"温度测量仪/热电偶",test_position:"鼓风机进风口","record_name":"马工",ps:"-"},
+	{project_name:"排烟温度",instrument_name:"温度测量仪/热电偶",test_position:"出口烟道一米范围内","record_name":"马工",ps:"-"},
+	{project_name:"烟气成分分析",instrument_name:"烟气分析仪",test_position:"出口烟道一米范围内","record_name":"马工",ps:"-"},
+	{project_name:"给水温度",instrument_name:"温度测量仪/热电偶",test_position:"锅炉进水管道","record_name":"马工",ps:"-"},
+	{project_name:"蒸汽压力",instrument_name:"压力表",test_position:"锅炉顶部压力表","record_name":"马工",ps:"-"},
+	{project_name:"给水压力",instrument_name:"压力表",test_position:"锅炉顶部压力表","record_name":"马工",ps:"-"}
 ];
 class Tab2 extends Component{
 	constructor(props){
@@ -46,13 +50,42 @@ class Tab2 extends Component{
 			date5:'选择日期',
 			date6:'选择日期',
 			date7:'选择日期',
-			sideNav:false
+			ckbox1:false,
+			ckbox2:false,
+			ckbox3:false,
+			ckbox4:false,
+			ckbox5:false,
+			ckbox6:false,
+			ckbox7:false,
+			ckbox8:false,
+			sideNav:false,
+			design_identify_organization:'-',
+			making_code:'-',
+			printing_num:'-',
+			make_date:'-',
+			use_date:'-',
+			fuel_type:'-',
+			fuel_type_code:'-',
+			test_task_work_order_num:"加载中...",
+			use_company_name:"加载中...",
+			test_task:"加载中...",
+			device_model:"加载中...",
+			device_code:"加载中...",
+			test_purpose:"加载中...",
+			testProjectList:["加载中..."],
+			check_name:"加载中...",
+			record_name:"加载中...",
+			remark_device:"加载中...",
+			listProQue:["加载中..."],
+			check_date_device:"加载中...",
+			record_date_device:"加载中..."
+			
 		}
 	}
 	_renderHeader(item, expanded){
 		return (
-			<View style={{width:'100%',flexDirection: "row",paddingVertical:10,justifyContent: "space-between",alignItems: "center" , backgroundColor: "#A9DAD6"}}>
-				<Text style={{paddingLeft:"2%"}}>{"设备:"+item.device+"/型号"+item.type}</Text>
+			<View style={{width:'100%',flexDirection: "row",paddingVertical:10,justifyContent: "space-between",alignItems: "center" , backgroundColor: "#A9DAD6",borderBottomWidth:1,borderColor:"#dedede"}}>
+				<Text style={{paddingLeft:"2%"}}>{"仪器:"+item.equipment_name+" / 目标："+item.equipment_number}</Text>
 				 {expanded
 				  ? <Icon style={{ fontSize: 18,paddingRight:"2%" }} name="remove-circle" />
 				  : <Icon style={{ fontSize: 18,paddingRight:"2%" }} name="add-circle" />
@@ -63,18 +96,16 @@ class Tab2 extends Component{
 	_renderContent(item) {
 		return (
 			<View style={{width:'100%',backgroundColor: "#e3f1f1",paddingVertical:10}}>
-				<Text>{"设备编号："+item.devId}</Text>
+				<Text>{"设备型号："+item.model_specification}</Text>
+				<Text>{"设备编号："+item.equipment_number}</Text>
 				<Text>{"测试项目："+item.tesfun}</Text>
-				<Text>{"仪器："+item.device}</Text>
-				<Text>{"精度："+item.precision}</Text>
-				<Text>{"量程："+item.range}</Text>
 			</View>
 		)
 	}
 	_rh(item, expanded){
 		return (
 			<View style={{width:'100%',flexDirection: "row",paddingVertical:10,justifyContent: "space-between",alignItems: "center" , backgroundColor: "#A9DAD6",borderBottomWidth:1,borderColor:"#dedede"}}>
-				<Text style={{paddingLeft:"2%"}}>{"测试项目:"+item.testItem}</Text>
+				<Text style={{paddingLeft:"2%"}}>{"测试项目:"+item.project_name}</Text>
 				 {expanded
 				  ? <Icon style={{ fontSize: 18,paddingRight:"2%"}} name="remove-circle" />
 				  : <Icon style={{ fontSize: 18,paddingRight:"2%" }} name="add-circle" />
@@ -85,15 +116,15 @@ class Tab2 extends Component{
 	_rc(item) {
 		return (
 			<View style={{width:'100%',backgroundColor: "#e3f1f1",paddingVertical:10}}>
-				<View style={{paddingHorizontal:25,paddingVertical:12}}><Text>{"仪器/仪表："+item.testDevice}</Text></View>
+				<View style={{paddingHorizontal:25,paddingVertical:12}}><Text>{"仪器/仪表："+item.instrument_name}</Text></View>
 				<View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:25}}>
 					<Text>测试部位：</Text>
-					<Input placeholder={item.testPartion} style={{borderBottomWidth:1,borderBottomColor:"#dedede"}}/>
+					<Input placeholder={item.test_position} style={{borderBottomWidth:1,borderBottomColor:"#dedede"}}/>
 				</View>
-				<View style={{paddingHorizontal:25,paddingVertical:12}}><Text>{"记录人："+item.record}</Text></View>
+				<View style={{paddingHorizontal:25,paddingVertical:12}}><Text>{"记录人："+item.record_name}</Text></View>
 				<View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:25}}>
 					<Text>备注：</Text>
-					<Input placeholder={item.ps} style={{borderBottomWidth:1,borderBottomColor:"#dedede"}}/>
+					<Input placeholder="无" style={{borderBottomWidth:1,borderBottomColor:"#dedede"}}/>
 				</View>
 			</View>
 		)
@@ -292,8 +323,8 @@ class Tab2 extends Component{
 		  selected: value
 		});
 	}
-	showModal(){
-		this.props.nav('modal');
+	showModal(type){
+		this.props.nav('modal',{type:type});
 	}
 	_layout(e){
 		// 判断横竖屏幕
@@ -313,18 +344,76 @@ class Tab2 extends Component{
 	grouppl(){
 		const data=[{key:"gp0",name:"李工"},{key:"gp0",name:"王工"}];
 		const fellows = data.map((item,index)=>(
-			<View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:12}}>
-				<Badge primary><Text>{index}</Text></Badge>
+			<View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:12}} key={index}>
+				<Badge style={{ backgroundColor:'#00B58A',borderWidth:1,borderColor:'#999',color:'#000'}}><Text>{index}</Text></Badge>
 				<Text>{item.name}</Text>
 			</View>
 		))
 		return fellows;
 	}
+	closeDatabase(){
+		if(sdyDb){
+			console.log("closeing database...");
+			sdyDb.close().then((status)=>{
+				console.log("数据库关闭");
+			}).catch((error)=>{console.log("无法关闭原因"+error)});
+		}
+	}
 	componentDidMount(){
+		var arr = [];
 		Orientation.unlockAllOrientations();
+		SQLite.openDatabase({name:'sdy.db'}).then((DB)=>{	
+			sdyDb = DB;
+			sdyDb.transaction((tx)=>{
+				tx.executeSql(`SELECT * FROM ordersDetail WHERE test_task_work_order_id = '${this.props.ready}'`).then(([txt,result])=>{
+					for(var i=0;i<result.rows.length;i++){
+						arr.push(result.rows.item(i));
+					}
+					this.setState({
+						use_company_name:arr[0].use_company_name,
+						test_task_work_order_num:arr[0].test_task_work_order_num,
+						test_task:arr[0].test_task,
+						device_model:arr[0].device_model,
+						device_code:arr[0].device_code,
+						test_purpose:arr[0].test_purpose,
+						testProjectList:JSON.parse(arr[0].testProjectList),
+						contact:arr[0].contact,
+						make_date:arr[0].make_date,
+						maker_name:arr[0].maker_name,
+						phone:arr[0].phone,
+						use_company_id:arr[0].use_company_id,
+						use_company_name:arr[0].use_company_name,
+						use_company_org_code:arr[0].use_company_org_code,
+						use_date:arr[0].use_date,
+						check_name:arr[0].check_name,
+						record_name:arr[0].record_name,
+						remark_device:arr[0].remark_device,
+						listProQue:JSON.parse(arr[0].listProQue),
+						check_date_device:arr[0].check_date_device,
+						record_date_device:arr[0].record_date_device
+					})
+					
+				})
+			}).then(()=>{
+				var brr = [];
+				sdyDb.transaction((tx)=>{
+					tx.executeSql(`SELECT * FROM orderList INNER JOIN comInfo ON orderList.use_company_id = comInfo.use_company_id WHERE test_task_work_order_id = '${this.props.ready}'`).then(([txt,result])=>{
+						for(var i=0;i<result.rows.length;i++){
+							brr.push(result.rows.item(i));
+						}
+						this.setState({
+							company_address:brr[0].company_address
+						})
+					})
+				})
+			})
+		})
 	}
 	componentDidUpdate(prevProps, prevState, snapshot){
 
+	}
+	componentWillUnmount(){
+		this.closeDatabase();
 	}
 	render(){
 		return (
@@ -358,38 +447,40 @@ class Tab2 extends Component{
 						<Body style={styles.CardBody}>
 							<View style={{width:'100%'}}>
 								<View style={{flex:1,alignItems:'center'}}><Txt h3>锅炉能效测试大纲</Txt></View>
-								<View style={{flex:1,alignSelf:'flex-end'}}><Text>编号：#3215151513</Text></View>
-							</View>
-							<View style={{width:'100%',flex:1,flexDirection:'row'}}>
-								<View style={{flex:0.5,alignItems:'center',flexDirection:'row'}}>
-									<Text style={styles.tabTitle}>锅炉使用单位：</Text>
-									<Text style={styles.tabCon}>广州衡纬科技有限公司</Text>
-								</View>
-								<View style={{flex:0.5,alignItems:'center',flexDirection:'row'}}>
-									<Text style={styles.tabTitle}>实验任务：</Text>
-									<Text style={styles.tabCon}>锅炉热效应简单测试</Text>
-								</View>
+								<View style={{flex:1,alignSelf:'flex-end',paddingVertical:25}}><Text>编号：{this.state.test_task_work_order_num}</Text></View>
 							</View>
 							<View style={{width:'100%',flex:1,flexDirection:'row'}}>
 								<View style={{flex:0.5,alignItems:'center',flexDirection:'row'}}>
 									<Text style={styles.tabTitle}>锅炉型号：</Text>
-									<Text style={styles.tabCon}>KD-123</Text>
+									<Text style={styles.tabCon}>{this.state.device_model}</Text>
 								</View>
 								<View style={{flex:0.5,alignItems:'center',flexDirection:'row'}}>
 									<Text style={styles.tabTitle}>产品编号：</Text>
-									<Text style={styles.tabCon}>054-225</Text>
+									<Text style={styles.tabCon}>{this.state.device_code}</Text>
+								</View>
+							</View>
+							<View style={{width:'100%',flex:1,flexDirection:'row'}}>
+								<View style={{flex:0.5,alignItems:'center',flexDirection:'row'}}>
+									<Text style={styles.tabTitle}>实验任务：</Text>
+									<Text style={styles.tabCon}>{this.state.test_task}</Text>
+								</View>
+							</View>
+							<View style={{width:'100%',flex:1,flexDirection:'row'}}>
+								<View style={{flex:0.5,alignItems:'center',flexDirection:'row'}}>
+									<Text style={styles.tabTitle}>锅炉使用单位：</Text>
+									<Text style={styles.tabCon}>{this.state.use_company_name}</Text>
 								</View>
 							</View>
 							<View style={{width:'100%',flex:1,flexDirection:'row'}}>
 								<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 									<Text style={styles.tabTitle}>实验目的：</Text>
-									<Text style={styles.tabCon}>对该锅炉进行主要参数的简单测试快速判定锅炉实际运行的能效状况</Text>
+									<Text style={styles.tabCon}>{this.state.test_purpose}</Text>
 								</View>
 							</View>
 							<View style={{width:'100%',flex:1,flexDirection:'column',alignItems:'center',alignContent:'center',paddingVertical:25}}>
 								<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 									<Text>请仔细查阅</Text>
-									 <TouchableOpacity onPress={()=>{this.showModal()}}><Text style={{color:"#3F51B5",textDecorationLine:'underline'}}>（实验要求）</Text></TouchableOpacity>
+									 <TouchableOpacity onPress={()=>{this.showModal('实验要求')}}><Text style={{color:"#3F51B5",textDecorationLine:'underline'}}>（实验要求）</Text></TouchableOpacity>
 									 <Text>并严格按照以上要求进行操作</Text>
 								</View>
 								{/*<View style={{flex:1,alignItems:'center',flexDirection:'row'}}><Radio selected={false} /><Text style={{fontSize:12,paddingLeft:12}}>我已了解，继续操作</Text></View> */}
@@ -426,24 +517,31 @@ class Tab2 extends Component{
 										<View style={{flex:1}}><Text style={styles.tabCon}>无</Text></View>
 									</View>
 									*/}
-									<View style={{width:'100%'}}>
-										<Accordion
-										dataArray={testObject}
-										headerStyle={{ backgroundColor: "#3F51B5" }}
-										contentStyle={{ backgroundColor: "#8191E9" }}
-										animation={true}
-										expanded={true}
-										renderHeader={this._rh}
-										renderContent={this._rc}
-										/>
-									</View>
+									{this.state.testProjectList[0]=="加载中..."?(
+										<View style={{width:'100%'}}>
+											<ActivityIndicator size="large" color="#0000ff" />
+										</View>
+									):(
+										<View style={{width:'100%'}}>
+											<Accordion
+											dataArray={this.state.testProjectList}
+											headerStyle={{ backgroundColor: "#3F51B5" }}
+											contentStyle={{ backgroundColor: "#8191E9" }}
+											animation={false}
+											expanded={true}
+											renderHeader={this._rh}
+											renderContent={this._rc}
+											/>
+										</View>
+									)}
+									
 									  
 									
 									<View style={{flex:1,flexDirection:'row',alignItems:'center',paddingVertical:25}}>
 										<View style={{width:'100%',flex:1,flexDirection:'column',alignItems:'center',alignContent:'center'}}>
 											<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 												<Text>请仔细查阅</Text>
-												 <TouchableOpacity onPress={()=>{this.showModal()}}>
+												 <TouchableOpacity onPress={()=>{this.showModal('测试工作程序')}}>
 													<Text style={{color:"#3F51B5",textDecorationLine:'underline'}}>（测试工作程序）</Text>
 												</TouchableOpacity>
 												 <Text>并严格按照以上要求进行操作</Text>
@@ -454,16 +552,19 @@ class Tab2 extends Component{
 									<View style={{flex:1,flexDirection:'column',alignItems:'center',paddingVertical:20}}>
 										<View style={{flex:1}}>
 											<Item inlineLabel style={{width:'100%'}}>
+												<Text>ath取值（%）：</Text>
 												<Input placeholder='ath取值（%）' keyboardType="numeric"/>
 											</Item>
 										</View>
 										<View style={{flex:1}}>
 											<Item inlineLabel style={{width:'100%'}}>
+												<Text>a1m取值（%）：</Text>
 												<Input placeholder='a1m取值（%）' keyboardType="numeric"/>
 											</Item>
 										</View>
 										<View style={{flex:1}}>
 											<Item inlineLabel style={{width:'100%'}}>
+												<Text>a1z取值（%）：</Text>
 												<Input placeholder='a1z取值（%）' keyboardType="numeric"/>
 											</Item>
 										</View>
@@ -482,8 +583,8 @@ class Tab2 extends Component{
 									</View>
 									<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
 										<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
-											<Text style={styles.tabCon}>负责人签名：</Text>
-											<Text>签名处</Text>
+											<Text style={styles.tabCon}>负责人：</Text>
+											<Text>林锦权</Text>
 										</View>
 										<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
 											<Text style={styles.tabCon}>日期：</Text>
@@ -544,35 +645,41 @@ class Tab2 extends Component{
 								<Body style={styles.CardBody}>
 									<View style={{width:'100%'}}>
 										<View style={{flex:1,alignItems:'center'}}><Txt h3>锅炉能效测试综合信息记录表</Txt></View>
-										<View style={{flex:1,alignSelf:'flex-end'}}><Text>编号：#3215151513</Text></View>
+										<View style={{flex:1,alignSelf:'flex-end',paddingVertical:25}}><Text>编号：{this.state.test_task_work_order_num}</Text></View>
 									</View>
-									<View style={styles.table}><Text>基本信息</Text></View>
+									<View style={{...styles.table,paddingVertical:25}}><Text>基本信息</Text></View>
 									<View style={styles.table}>
-										<View style={styles.table}>
-											<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
+										<View style={{flexDirection:'column',width:'100%',alignContent:'flex-start'}}>
+											<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 												<Text style={styles.tabTitle}>使用单位：</Text>
-												<Text style={[styles.tabCon,styles.disabledTxt]}>广州衡纬科技有限公司</Text>
+												<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.use_company_name}</Text>
 											</View>
-											<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
+											<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 												<Text style={styles.tabTitle}>使用单位组织机构代码：</Text>
-												<Text style={[styles.tabCon,styles.disabledTxt]}>OSS-8871551</Text>
+												<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.use_company_org_code}</Text>
+											</View>
+											<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
+												<Text style={styles.tabTitle}>委托单位：</Text>
+												<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.use_company_name}</Text>
+											</View>
+											<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
+												<Text style={styles.tabTitle}>制造单位：</Text>
+												<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.maker_name}</Text>
+											</View>
+											<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
+												<Text style={styles.tabTitle}>测试地点：</Text>
+												<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.company_address}</Text>
+											</View>
+											<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
+												<Text style={styles.tabTitle}>锅炉房名称：</Text>
+												<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'100%'}}><Input placeholder="锅炉房名称"/></Item></View>
 											</View>
 										</View>
 									</View>
 									<View style={styles.table}>
-										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
-											<Text style={styles.tabTitle}>委托单位：</Text>
-											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="委托单位"/></Item></View>
-										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>使用证号：</Text>
-											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="使用证号"/></Item></View>
-										</View>
-									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
-											<Text style={styles.tabTitle}>测试地点：</Text>
-											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="测试地点"/></Item></View>
+											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'100%'}}><Input placeholder="使用证号"/></Item></View>
 										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>内部编号：</Text>
@@ -581,8 +688,8 @@ class Tab2 extends Component{
 									</View>
 									<View style={styles.table}>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
-											<Text style={styles.tabTitle}>锅炉房名称：</Text>
-											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="锅炉房名称"/></Item></View>
+											<Text style={styles.tabTitle}>传真号码：</Text>
+											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="传真号码"/></Item></View>
 										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>邮政编号：</Text>
@@ -592,47 +699,37 @@ class Tab2 extends Component{
 									<View style={styles.table}>
 											<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 												<Text style={styles.tabTitle}>联系人：</Text>
-												<Text style={[styles.tabCon,styles.disabledTxt]}>测试专业户</Text>
+												<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.contact}</Text>
 											</View>
 											<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 												<Text style={styles.tabTitle}>联系人电话：</Text>
-												<Text style={[styles.tabCon,styles.disabledTxt]}>15920419808</Text>
+												<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.use_company_mobile_phone}</Text>
 											</View>
-									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
-											<Text style={styles.tabTitle}>传真号码：</Text>
-											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="传真号码"/></Item></View>
-										</View>
-										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
-											<Text style={styles.tabTitle}>制造单位：</Text>
-											<Text style={[styles.tabCon,styles.disabledTxt]}>广州衡纬科技有限公司</Text>
-										</View>
 									</View>
 									<View style={styles.table}>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>制造许可证编号：</Text>
-											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="制造许可证编号"/></Item></View>
+											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder={this.state.making_code}/></Item></View>
 										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>锅炉型号：</Text>
-											<Text style={[styles.tabCon,styles.disabledTxt]}>KD-123</Text>
+											<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.device_model}</Text>
 										</View>
 									</View>
 									<View style={styles.table}>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>设计文件鉴定机构：</Text>
-											<Text style={[styles.tabCon,styles.disabledTxt]}>越秀区教育局</Text>
+											<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.design_identify_organization}</Text>
 										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>产品编号：</Text>
-											<Text style={[styles.tabCon,styles.disabledTxt]}>SDY-1351215</Text>
+											<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.device_code}</Text>
 										</View>
 									</View>
 									<View style={styles.table}>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>总图号：</Text>
-											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input placeholder="总图号"/></Item></View>
+											<View style={{flex:1,flexDirection:'row'}}><Item style={{width:'80%'}}><Input editable={false} placeholder={this.state.printing_num}/></Item></View>
 										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>设计文件鉴定编号：</Text>
@@ -642,11 +739,11 @@ class Tab2 extends Component{
 									<View style={styles.table}>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>制造日期：</Text>
-											<Text style={[styles.tabCon,styles.disabledTxt]}>2018-08-08</Text>
+											<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.make_date}</Text>
 										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>投用日期：</Text>
-											<Text style={[styles.tabCon,styles.disabledTxt]}>2019-01-05</Text>
+											<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.use_date}</Text>
 										</View>
 									</View>
 									<View style={styles.table}>
@@ -675,24 +772,11 @@ class Tab2 extends Component{
 									<View style={styles.table}>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>使用燃料种类：</Text>
-											 <Picker
-												  mode="dropdown"
-												  iosHeader="使用燃烧方式"
-												  iosIcon={<Icon name="arrow-down" />}
-												  style={{width:10}}
-												  selectedValue={this.state.selected5}
-												  onValueChange={(e)=>{this.pickChange(e,5)}}
-												>
-												  <Picker.Item label="层状燃烧" value="key0" />
-												  <Picker.Item label="自然燃烧" value="key1" />
-												  <Picker.Item label="液化燃烧" value="key2" />
-												  <Picker.Item label="化学燃烧" value="key3" />
-												  <Picker.Item label="气体燃烧" value="key4" />
-												</Picker>
+											<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.fuel_type}</Text>
 										</View>
 										<View style={{flex:0.5,flexDirection:'row',alignItems:'center',alignContent:'center'}}>
 											<Text style={styles.tabTitle}>燃料样品编号：</Text>
-											<Text style={[styles.tabCon,styles.disabledTxt]}>88495445800</Text>
+											<Text style={[styles.tabCon,styles.disabledTxt]}>{this.state.fuel_type_code}</Text>
 										</View>
 									</View>
 								</Body>
@@ -701,380 +785,191 @@ class Tab2 extends Component{
 						<Card>
 							<CardItem>
 								<Body style={styles.CardBody}>
-									<View style={styles.table}><Text>测试现场情况</Text></View>
-									<View style={styles.table}>
-										<View style={{flex:0.1}}><Text>测试类型：</Text></View>
-										<View style={{flex:0.28}}>
-											<ListItem selected={false} style={{flex:1,flexDirection:'row'}}>
-												<Radio color={"#999999"} selected={false} /><Right style={{flex:1,marginLeft:12}}><Text style={styles.disabledTxt}>定型产品热效率测试</Text></Right>
-											</ListItem>
-										</View>
-										<View style={{flex:0.31}}>
-											<ListItem selected={false} style={{flex:1,flexDirection:'row'}}>
-												<Radio color={"#999999"} selected={false} /><Right style={{flex:1,marginLeft:12}}><Text style={styles.disabledTxt}>运行工况热效率详细测试</Text></Right>
-											</ListItem>
-										</View>
-										<View style={{flex:0.31}}>
-											<ListItem selected={true} style={{flex:1,flexDirection:'row'}}>
-												<Radio selected={true} /><Right style={{flex:1,marginLeft:12}}><Text>运行工况热效率简单测试</Text></Right>
-											</ListItem>
-										</View>
+									<View style={{...styles.table,paddingVertical:25}}><Text>测试现场情况</Text></View>
+									<View style={{width:'100%'}}>
+									<List>
+										<ListItem itemHeader first>
+											<Text>测试类型</Text>
+										</ListItem>
+										<ListItem>
+											<Text>运行工况热效率简单测试</Text>
+										</ListItem>
+										<ListItem itemHeader>
+											<Text>锅炉类型</Text>
+										</ListItem>
+										<ListItem>
+											<Picker
+											mode="dropdown"
+											placeholder="锅炉种类"
+											iosIcon={<Icon name="arrow-down" />}
+											 itemStyle={{
+												backgroundColor: "#d3d3d3",
+												marginLeft: 0,
+												paddingLeft: 10,
+												width:'50%'
+											  }}
+											  itemTextStyle={{ color: '#788ad2' }}
+											style={{ width:'50%'}}
+											selectedValue={this.state.selected}
+											onValueChange={this.onValueChange.bind(this)}
+											>		
+											 <Picker.Item label="蒸汽锅炉" value="key0" />
+											 <Picker.Item label="热水锅炉" value="key1" />
+											 <Picker.Item label="有机载热体锅炉" value="key2" />
+											</Picker>
+										</ListItem>
+										<ListItem itemHeader>
+											<Text>锅炉系统信息</Text>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox1}>
+											<CheckBox checked={this.state.ckbox1} onPress={()=>{!this.state.ckbox1?this.setState({ckbox1:true}):this.setState({ckbox1:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox1?this.setState({ckbox1:true}):this.setState({ckbox1:false})}}>
+													<Text>省煤器</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox2}>
+											<CheckBox checked={this.state.ckbox2} onPress={()=>{!this.state.ckbox2?this.setState({ckbox2:true}):this.setState({ckbox2:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox2?this.setState({ckbox2:true}):this.setState({ckbox2:false})}}>
+													<Text>软化水装置</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox3}>
+											<CheckBox checked={this.state.ckbox3} onPress={()=>{!this.state.ckbox3?this.setState({ckbox3:true}):this.setState({ckbox3:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox3?this.setState({ckbox3:true}):this.setState({ckbox3:false})}}>
+													<Text>除氧装置</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox4}>
+											<CheckBox checked={this.state.ckbox4} onPress={()=>{!this.state.ckbox4?this.setState({ckbox4:true}):this.setState({ckbox4:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox4?this.setState({ckbox4:true}):this.setState({ckbox4:false})}}>
+													<Text>空气预热器</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox5}>
+											<CheckBox checked={this.state.ckbox5} onPress={()=>{!this.state.ckbox5?this.setState({ckbox5:true}):this.setState({ckbox5:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox5?this.setState({ckbox5:true}):this.setState({ckbox5:false})}}>
+													<Text>脱硫装置</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox6}>
+											<CheckBox checked={this.state.ckbox6} onPress={()=>{!this.state.ckbox6?this.setState({ckbox6:true}):this.setState({ckbox6:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox6?this.setState({ckbox6:true}):this.setState({ckbox6:false})}}>
+													<Text>烟气节能器</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox7}>
+											<CheckBox checked={this.state.ckbox7} onPress={()=>{!this.state.ckbox7?this.setState({ckbox7:true}):this.setState({ckbox7:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox7?this.setState({ckbox7:true}):this.setState({ckbox7:false})}}>
+													<Text>脱氮装置</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon selected={this.state.ckbox8}>
+											<CheckBox checked={this.state.ckbox8} onPress={()=>{!this.state.ckbox8?this.setState({ckbox8:true}):this.setState({ckbox8:false})}}/>
+											<Body>
+												<TouchableOpacity onPress={()=>{!this.state.ckbox8?this.setState({ckbox8:true}):this.setState({ckbox8:false})}}>
+													<Text>蒸汽发生器</Text>
+												</TouchableOpacity>
+											</Body>
+										</ListItem>
+										<ListItem icon>
+											<Body>
+												<View style={{width:'100%',flexDirection:'row',alignItems:'center'}}>
+													<Text>除尘方式</Text>
+													<Input placeholder="此处键盘输入除尘方式"/>
+												</View>
+											</Body>
+										</ListItem>
+										<ListItem itemHeader>
+											<Text>测试情况说明</Text>
+										</ListItem>
+										<ListItem icon>
+											<Body>
+												<View style={{width:'100%',flexDirection:'row',alignItems:'center'}}>
+													<Text>锅炉辅机状况</Text>
+													<Input placeholder="此处键盘输入工况"/>
+												</View>
+											</Body>
+										</ListItem>
+										<ListItem icon>
+											<Body>
+												<View style={{width:'100%',flexDirection:'row',alignItems:'center'}}>
+													<Text>锅炉系统状况</Text>
+													<Input placeholder="此处键盘输入工况"/>
+												</View>
+											</Body>
+										</ListItem>
+										<ListItem icon>
+											<Body>
+												<View style={{width:'100%',flexDirection:'row',alignItems:'center'}}>
+													<Text>锅炉使用燃料状况</Text>
+													<Input placeholder="此处键盘输入工况"/>
+												</View>
+											</Body>
+										</ListItem>
+										<ListItem icon>
+											<Body>
+												<View style={{width:'100%',flexDirection:'row',alignItems:'center'}}>
+													<Text>锅炉介质状况</Text>
+													<Input placeholder="此处键盘输入工况"/>
+												</View>
+											</Body>
+										</ListItem>
+										<ListItem icon>
+											<Body>
+												<View style={{width:'100%',flexDirection:'row',alignItems:'center'}}>
+													<Text>燃料、煤、渣系统</Text>
+													<Input placeholder="此处键盘输入工况"/>
+												</View>
+											</Body>
+										</ListItem>
+										<ListItem icon>
+											<Body>
+												<View style={{width:'100%',flexDirection:'row',alignItems:'center'}}>
+													<Text>其他需要说明的问题</Text>
+													<Input placeholder="此处键盘输入工况"/>
+												</View>
+											</Body>
+										</ListItem>
+									</List>
 									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.1}}><Text style={styles.tabCon}>锅炉种类：</Text></View>
-										<View style={{flex:0.28}}>
-											<ListItem>
-												<CheckBox checked={false} />
-												<Body>
-												  <Text>蒸汽锅炉</Text>
-												</Body>
-											</ListItem>
-										</View>
-										<View style={{flex:0.31}}>
-											<ListItem>
-												<CheckBox checked={false} />
-												<Body>
-												  <Text>热水锅炉</Text>
-												</Body>
-											</ListItem>
-										</View>
-										<View style={{flex:0.31}}>
-											<ListItem>
-												<CheckBox checked={false} />
-												<Body>
-												  <Text>有机载热体锅炉</Text>
-												</Body>
-											</ListItem>
-										</View>
-									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.1}}><Text style={styles.tabCon}>锅炉系统信息：</Text></View>
-										<View style={{flex:0.9}}>
-											<View style={{width:'100%',flexDirection:'row',alignContent:'center',flexWrap:'wrap',alignItems:'center'}}>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>省煤气</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>软化水装置</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>除氧装置</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>空气预热器</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>脱硫装置</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>烟气节能器</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>脱氮装置</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<CheckBox checked={false} />
-														<Body>
-														  <Text>蒸汽发生器</Text>
-														</Body>
-													</ListItem>
-												</View>
-												<View style={{width:'33%'}}>
-													<ListItem>
-														<Body>
-															<Text>除尘方式</Text>
-														</Body>
-														<Picker
-														  mode="dropdown"
-														  iosHeader="使用燃烧方式"
-														  iosIcon={<Icon name="arrow-down" />}
-														  style={{width:10}}
-														  selectedValue={this.state.selected6}
-														  onValueChange={(e)=>{this.pickChange(e,6)}}
-														>
-														  <Picker.Item label="无除尘方式" value="key0" />
-														  <Picker.Item label="旋风除尘" value="key1" />
-														  <Picker.Item label="净化器" value="key2" />
-														</Picker>
-													</ListItem>
-												</View>
+									{/*******************************************/}
+									<View style={{width:'100%',paddingVertical:25}}>
+										<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+												<Text style={styles.tabCon}>记录：</Text>
+												<Text>林锦权</Text>
+											</View>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+												<Text style={styles.tabCon}>记录日期：</Text>
+												<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
 											</View>
 										</View>
-									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.1}}><Text style={styles.tabCon}>锅炉系统信息：</Text></View>
-										<View style={{flex:0.9}}>
-											<View style={{width:'100%',flexDirection:'row',alignContent:'center',flexWrap:'wrap',alignItems:'center'}}>
-												<ListItem>
-												<View style={{width:'50%'}}><Text style={styles.tabCon}>测试工况</Text></View>
-												<View style={{width:'30%'}}><Text style={styles.tabCon}>工况I</Text></View>
-												<View style={{width:'20%'}}><Text style={styles.tabCon}>工况II</Text></View>
-												</ListItem>
-												<ListItem>
-												<View style={{width:'50%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-													
-														<CheckBox checked={false} />
-														<Body>
-															<Text style={styles.tabCon}>锅炉铺机状况</Text>
-														</Body>
-													
-													</View>
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-														<CheckBox checked={false} />
-														<Body>
-															<Text>锅炉运行状况</Text>
-														</Body>
-													
-													</View>
-													
-												</View>
-												<View style={{width:'30%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													<View style={{width:'100%'}}>
-													<Picker
-														  mode="dropdown"
-														  iosHeader="工况I"
-														  iosIcon={<Icon name="arrow-down" />}
-														  style={{width:'100%'}}
-														  selectedValue={this.state.selected7}
-														  onValueChange={(e)=>{this.pickChange(e,7)}}
-														>
-														  <Picker.Item label="运行正常" value="key0" />
-														  <Picker.Item label="运行异常" value="key1" />
-														  <Picker.Item label="未知异常" value="key2" />
-														</Picker>
-													</View>
-												</View>
-												<View style={{width:'20%'}}><Text></Text></View>
-												</ListItem>
-												<ListItem>
-												<View style={{width:'50%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-													
-														<CheckBox checked={false} />
-														<Body>
-															<Text style={styles.tabCon}>锅炉系统状况</Text>
-														</Body>
-													
-													</View>
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-														<CheckBox checked={false} />
-														<Body>
-															<Text>系统运行状况</Text>
-														</Body>
-													
-													</View>
-													
-												</View>
-												<View style={{width:'30%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													<View style={{width:'100%'}}>
-													<Picker
-														  mode="dropdown"
-														  iosHeader="工况I"
-														  iosIcon={<Icon name="arrow-down" />}
-														  style={{width:'100%'}}
-														  selectedValue={this.state.selected8}
-														  onValueChange={(e)=>{this.pickChange(e,8)}}
-														>
-														  <Picker.Item label="运行正常" value="key0" />
-														  <Picker.Item label="运行异常" value="key1" />
-														  <Picker.Item label="未知异常" value="key2" />
-														</Picker>
-													</View>
-												</View>
-												<View style={{width:'20%'}}><Text></Text></View>
-												</ListItem>
-												<ListItem>
-												<View style={{width:'50%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-													
-														<CheckBox checked={false} />
-														<Body>
-															<Text style={styles.tabCon}>锅炉燃料使用状况</Text>
-														</Body>
-													
-													</View>
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-														<CheckBox checked={false} />
-														<Body>
-															<Text>测试燃料符合性</Text>
-														</Body>
-													
-													</View>
-													
-												</View>
-												<View style={{width:'30%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													<View style={{width:'100%'}}>
-													<Picker
-														  mode="dropdown"
-														  iosHeader="工况I"
-														  iosIcon={<Icon name="arrow-down" />}
-														  style={{width:'100%'}}
-														  selectedValue={this.state.selected9}
-														  onValueChange={(e)=>{this.pickChange(e,9)}}
-														>
-														  <Picker.Item label="运行正常" value="key0" />
-														  <Picker.Item label="运行异常" value="key1" />
-														  <Picker.Item label="未知异常" value="key2" />
-														</Picker>
-													</View>
-												</View>
-												<View style={{width:'20%'}}><Text></Text></View>
-												</ListItem>
-												<ListItem>
-												<View style={{width:'50%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-													
-														<CheckBox checked={false} />
-														<Body>
-															<Text style={styles.tabCon}>锅炉介质状况</Text>
-														</Body>
-													
-													</View>
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-														<CheckBox checked={false} />
-														<Body>
-															<Text>锅炉工质符合性</Text>
-														</Body>
-													
-													</View>
-													
-												</View>
-												<View style={{width:'30%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													<View style={{width:'100%'}}>
-														<Item><Input placeholder="工况I" /></Item>
-													</View>
-												</View>
-												<View style={{width:'20%'}}><Text></Text></View>
-												</ListItem>
-												<ListItem>
-												<View style={{width:'50%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-													
-														<CheckBox checked={false} />
-														<Body>
-															<Text style={styles.tabCon}>燃料、煤、渣系统</Text>
-														</Body>
-													
-													</View>
-													<View style={{width:'50%',display:'flex',alignItems:'center',flexDirection:'row',alignContent:'center'}}>
-														<CheckBox checked={false} />
-														<Body>
-															<Text>燃料系统</Text>
-														</Body>
-													
-													</View>
-													
-												</View>
-												<View style={{width:'30%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													<View style={{width:'100%'}}>
-													<Picker
-														  mode="dropdown"
-														  iosHeader="工况I"
-														  iosIcon={<Icon name="arrow-down" />}
-														  style={{width:'100%'}}
-														  selectedValue={this.state.selected10}
-														  onValueChange={(e)=>{this.pickChange(e,10)}}
-														>
-														  <Picker.Item label="运行正常" value="key0" />
-														  <Picker.Item label="运行异常" value="key1" />
-														  <Picker.Item label="未知异常" value="key2" />
-														</Picker>
-													</View>
-												</View>
-												<View style={{width:'20%'}}><Text></Text></View>
-												</ListItem>
-												<ListItem>
-												<View style={{width:'100%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
-													<Textarea rowSpan={5} style={{width:'100%'}} bordered placeholder="其他情况说明" />
-												</View>
-												</ListItem>
+										<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+												<Text style={styles.tabCon}>校对：</Text>
+												<Text>林锦权</Text>
+											</View>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+												<Text style={styles.tabCon}>校对日期：</Text>
+												<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
 											</View>
 										</View>
 									</View>
 									{/*******************************************/}
-									<View style={styles.table}>
-										<View style={{flex:0.1}}><Text>记录</Text></View>
-										<View style={{display:'flex',flex:0.4,flexDirection:'row',flexWrap:'nowrap',alignContent:'center',alignItems:'center'}}>
-											<Picker
-												mode="dropdown"
-												iosHeader="工况I"
-												iosIcon={<Icon name="arrow-down" />}
-												style={{width:100}}
-												selectedValue={this.state.selected10}
-												onValueChange={(e)=>{this.pickChange(e,10)}}
-											>
-											  <Picker.Item label="张工" value="key0" />
-											  <Picker.Item label="李工" value="key1" />
-											  <Picker.Item label="王工" value="key2" />
-											</Picker>
-											<Text>签名处</Text>
-										</View>
-										<View style={{flex:0.1}}><Text>日期</Text></View>
-										<View style={{flex:0.4}}>
-											<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(4)}}><Text>{this.state.date4}</Text></Button>
-										</View>
-										<View style={{flex:0.1}}><Text>校对</Text></View>
-										<View style={{flex:0.4}}>
-											<Picker
-												mode="dropdown"
-												iosHeader="工况I"
-												iosIcon={<Icon name="arrow-down" />}
-												style={{width:100}}
-												selectedValue={this.state.selected11}
-												onValueChange={(e)=>{this.pickChange(e,11)}}
-											>
-											  <Picker.Item label="张工" value="key0" />
-											  <Picker.Item label="李工" value="key1" />
-											  <Picker.Item label="王工" value="key2" />
-											</Picker>
-										</View>
-										<View style={{flex:0.1}}><Text>校对日期</Text></View>
-										<View style={{flex:0.4}}>
-											<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(5)}}><Text>{this.state.date5}</Text></Button>
-										</View>
-									</View>
 								</Body>
 							</CardItem>
 						</Card>
@@ -1084,7 +979,7 @@ class Tab2 extends Component{
 									{/***************设计参数二***************/}
 									<View style={{width:'100%'}}>
 										<View style={{flex:1,alignItems:'center'}}><Txt h3>锅炉设计数据综合表</Txt></View>
-										<View style={{flex:1,alignSelf:'flex-end'}}><Text>编号：#3215151513</Text></View>
+										<View style={{flex:1,alignSelf:'flex-end',paddingVertical:25}}><Text>编号：#3215151513</Text></View>
 									</View>
 									<View style={styles.table}><Text style={styles.tabCon}>设计参数一</Text></View>
 									<View style={styles.table}>
@@ -1316,18 +1211,26 @@ class Tab2 extends Component{
 										<View style={{flex:1}}><Text style={styles.tabCon}>kJ/kg</Text></View>
 										<View style={{flex:1}}><Item><Input placeholder="填入数据"/></Item></View>
 									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.3}}><Text>记录</Text></View>
-										<View style={{flex:0.7}}><Item><Input placeholder="记录人"/></Item></View>
-										<View style={{flex:0.3}}><Text>记录日期</Text></View>
-										<View style={{flex:0.7}}>
-											<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(6)}}><Text>{this.state.date6}</Text></Button>
+									<View style={{width:'100%',paddingVertical:25}}>
+										<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+												<Text style={styles.tabCon}>记录：</Text>
+												<Text>林锦权</Text>
+											</View>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+												<Text style={styles.tabCon}>记录日期：</Text>
+												<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
+											</View>
 										</View>
-										<View style={{flex:0.3}}><Text>校对</Text></View>
-										<View style={{flex:0.7}}><Item><Input placeholder="校对人"/></Item></View>
-										<View style={{flex:0.3}}><Text>校对日期</Text></View>
-										<View style={{flex:0.7}}>
-											<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(7)}}><Text>{this.state.date7}</Text></Button>
+										<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+												<Text style={styles.tabCon}>校对：</Text>
+												<Text>林锦权</Text>
+											</View>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+												<Text style={styles.tabCon}>校对日期：</Text>
+												<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
+											</View>
 										</View>
 									</View>
 								</Body>
@@ -1338,54 +1241,49 @@ class Tab2 extends Component{
 								<Body style={styles.CardBody}>
 									<View style={{width:'100%'}}>
 										<View style={{flex:1,alignItems:'center'}}><Txt h3>锅炉能效测试现场使用设备表</Txt></View>
-										<View style={{flex:1,alignSelf:'flex-end'}}><Text>编号：#3215151513</Text></View>
+										<View style={{flex:1,alignSelf:'flex-end',paddingVertical:25}}><Text>编号：#3215151513</Text></View>
 									</View>
-									{/*
-									<View style={styles.table}>
-										<View style={{flex:0.03}}><Text style={styles.tabCon}>序号</Text></View>
-										<View style={{flex:0.08}}><Text style={styles.tabCon}>设备编号</Text></View>
-										<View style={{flex:0.09}}><Text style={styles.tabCon}>测试项目</Text></View>
-										<View style={{flex:0.08}}><Text style={styles.tabCon}>型号</Text></View>
-										<View style={{flex:0.15}}><Text style={styles.tabCon}>仪器</Text></View>
-										<View style={{flex:0.3}}><Text style={styles.tabCon}>精度</Text></View>
-										<View style={{flex:0.1}}><Text style={styles.tabCon}>量程</Text></View>
-										<View style={{flex:0.1}}><Text style={styles.tabCon}>有效期</Text></View>
-									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.03}}><Text style={styles.tabCon}>1</Text></View>
-										<View style={{flex:0.08}}><Text style={styles.tabCon}>XHX-0119</Text></View>
-										<View style={{flex:0.09}}><Text style={styles.tabCon}>入炉冷空气温度</Text></View>
-										<View style={{flex:0.08}}><Text style={styles.tabCon}>TH603A</Text></View>
-										<View style={{flex:0.15}}><Text style={styles.tabCon}>温湿度表</Text></View>
-										<View style={{flex:0.3}}><Text style={styles.tabCon}>温度测量精度：小于±1℃(-10～32℃),湿度测量精度：小于±5%(50～99%)</Text></View>
-										<View style={{flex:0.1}}><Text style={styles.tabCon}>温度:-30～60℃,湿度：0～100%RH</Text></View>
-										<View style={{flex:0.1}}><Text style={styles.tabCon}>2019.1</Text></View>
-									</View>
-									*/}
-									<Accordion
-										dataArray={dataArray}
-										headerStyle={{ backgroundColor: "#3F51B5" }}
-										contentStyle={{ backgroundColor: "#8191E9" }}
-										animation={true}
-										expanded={true}
-										renderHeader={this._renderHeader}
-										renderContent={this._renderContent}
-									/>
+									{this.state.listProQue[0]=="加载中..."?(
+										<View style={{width:'100%'}}>
+											<ActivityIndicator size="large" color="#0000ff" />
+										</View>
+									):(
+										<View style={{width:'100%'}}>
+											<Accordion
+												dataArray={this.state.listProQue}
+												headerStyle={{ backgroundColor: "#3F51B5" }}
+												contentStyle={{ backgroundColor: "#8191E9" }}
+												animation={false}
+												expanded={true}
+												renderHeader={this._renderHeader}
+												renderContent={this._renderContent}
+											/>
+										</View>
+									)}
+									
 									<View style={{width:'100%',display:'flex',flexDirection:'row',flexWrap:'nowrap',alignItems:'center'}}>
 										<Textarea rowSpan={5} style={{width:'100%'}} bordered placeholder="备注（选填选项）" />
 									</View>
-									<View style={styles.table}>
-										<View style={{flex:0.3}}><Text>记录</Text></View>
-										<View style={{flex:0.7}}><Item><Input placeholder="记录人"/></Item></View>
-										<View style={{flex:0.3}}><Text>记录日期</Text></View>
-										<View style={{flex:0.7}}>
-											<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(6)}}><Text>{this.state.date6}</Text></Button>
+									<View style={{width:'100%',paddingVertical:25}}>
+										<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+												<Text style={styles.tabCon}>记录：</Text>
+												<Text>林锦权</Text>
+											</View>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+												<Text style={styles.tabCon}>记录日期：</Text>
+												<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
+											</View>
 										</View>
-										<View style={{flex:0.3}}><Text>校对</Text></View>
-										<View style={{flex:0.7}}><Item><Input placeholder="校对人"/></Item></View>
-										<View style={{flex:0.3}}><Text>校对日期</Text></View>
-										<View style={{flex:0.7}}>
-											<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(7)}}><Text>{this.state.date7}</Text></Button>
+										<View style={{flex:1,flexDirection:'row',alignItems:'center',alignContent:'space-between'}}>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',alignContent:'flex-start'}}>
+												<Text style={styles.tabCon}>校对：</Text>
+												<Text>林锦权</Text>
+											</View>
+											<View style={{width:'50%',flexDirection:'row',alignItems:'center',justifyContent:'flex-end'}}>
+												<Text style={styles.tabCon}>校对日期：</Text>
+												<Button style={{marginHorizontal:12}} light onPress={()=>{this.DatePicker(1)}}><Text>{this.state.date1}</Text></Button>
+											</View>
 										</View>
 									</View>
 								</Body>

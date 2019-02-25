@@ -1,0 +1,91 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no"/>
+<title>锅炉能效测试结果及结论分析表</title>
+<script type="text/javascript" src="../js/public.js"></script>
+<link type="text/css" rel="stylesheet" href="../css/public.css"/>
+<style>
+	.table table:nth-of-type(2) td>p{padding:2% 0;}
+	.table table:nth-of-type(2) td>p>input[type='radio']{
+		width: 20px;
+		height: 20px;
+		vertical-align: middle;
+	}
+	.table table:nth-of-type(2) td>p>input[type='text']{
+		border:none;
+		    border: none;
+		border-bottom: 1px solid #000;
+		outline: none;
+	}
+	.table table:nth-of-type(2) td>p>textarea{border:none;outline:none;border-bottom:1px solid #000;width:63%;}
+</style>
+</head>
+<body>
+	<div class="table">
+		<h3>质量体系文件编号：<span>GDSEI/RXN-40-2.00</span></h3>
+		<table cellpadding="0" cellspacing="0">
+			<caption style="padding:2% 0;"><b style="font-size:40px;">锅炉能效测试结果及结论分析表</b></caption>
+			<tr><td colspan="4"><p class="r">编号:10120256<p></td></tr>
+			<tr>
+				<td>锅炉型号</td>
+				<td></td>
+				<td>产品编号</td>
+				<td></td>
+			</tr>
+		</table>
+		<table cellpadding="0" cellspacing="0">
+			<tr>
+				<td>测试情况补充说明</td>
+				<td colspan="4">
+					<p><input type="radio" name="ff" />燃料由广东省特种设备检测研究院顺德检测院化验。</p>
+					<p><input type="radio" name="ff" />燃料化验报告由<input type="text" value=""/>提供</p>
+					<p><input type="radio" name="ff" />该锅炉设计燃料为<input type="text" value=""/>测试期间使用燃料为<input type="text" value=""/></p>
+					<p><input type="radio" name="ff" />与设计燃料一致。</p>
+					<p><input type="radio" name="ff" />其他:<textarea></textarea></p>
+				</td>
+			</tr>
+			<tr>
+				<td rowspan="2">测试结果</td>
+				<td>锅炉出力</td>
+				<td> MW</td>
+				<td>锅炉热效率</td>
+				<td>%</td>
+			</tr>
+			<tr>
+				<td>排烟温度</td>
+				<td> ℃</td>
+				<td>排烟处过量空气系数</td>
+				<td></td>
+			</tr>
+			<tr>
+				<td>测试情况补充说明</td>
+				<td colspan="4">
+					<p><input type="radio"/>锅炉热效率符合《锅炉节能技术监督管理规程》规定的工业锅炉产品热效率指标限定值的要求；</p>
+					<p><input type="radio"/>锅炉热效率不符合《锅炉节能技术监督管理规程》规定的工业锅炉产品热效率指标限定值的要求；</p>
+					<p><input type="radio"/>排烟温度和排烟处过量空气系数偏高，建议使用单位采取措施降低排烟温度和排烟处过量空气系数，如：增加烟气余热回收装置，调整配风系统等。</p>
+					<p><input type="radio"/>排烟温度偏高，建议使用单位采取措施降低排烟温度，如：增加烟气余热回收装置等。</p>
+					<p><input type="radio"/>排烟处过量空气系数偏高，建议使用单位采取措施降低排烟处过量空气系数，如：调整配风系统等。</p>
+					<p><input type="radio"/>其他：<br/><textarea></textarea></p>
+					
+				</td>
+			</tr>
+		</table>
+		<table cellpadding="0" cellspacing="0">
+			<tr>
+				<td>记录</td>
+				<td></td>
+				<td>记录日期</td>
+				<td><input type="date" value=""/></td>
+			</tr>
+			<tr>
+				<td>校对</td>
+				<td></td>
+				<td>校对日期</td>
+				<td><input type="date" value=""/></td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>
