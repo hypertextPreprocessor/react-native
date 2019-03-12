@@ -9,7 +9,7 @@ import Datalist from './screens/datas';
 import Modal from './screens/Modal';
 import SignatureView from "react-native-signature";
 import { config } from './config.js';
-
+import SplashScreen from 'react-native-splash-screen';
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
   android:
@@ -72,7 +72,7 @@ export default class App extends React.Component{
 	  const userToken = await AsyncStorage.getItem('uid');
   }
   componentDidMount(){
-	   
+	   SplashScreen.show();
   }
   render() {
     return <AppContainer ref={nav=>this.natigator=nav} />;

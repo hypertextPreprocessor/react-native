@@ -20,7 +20,8 @@ import {
 	StatusBar,
 	Dimensions,
 	Transforms,
-	LayoutAnimation
+	LayoutAnimation,
+	NativeModules
 } from 'react-native';
 import { Provider,connect} from 'react-redux';
 import { createStore } from 'redux';
@@ -35,6 +36,7 @@ import SQLite from 'react-native-sqlite-storage';
 import { config } from '../config.js';
 import Swiper from 'react-native-swiper';
 import { Root,Button,ActionSheet } from 'native-base';
+import SplashScreen from 'react-native-splash-screen';
 SQLite.DEBUG(true);
 SQLite.enablePromise(true);
 let sdyDb;
@@ -705,6 +707,23 @@ class HomeScreen extends React.Component{
 				//网络错误;
 				this.offlinesupports();
 			})
+		}).then(()=>{
+			SplashScreen.hide();
+			/*
+			NativeModules.ToastExample.measureData(
+               "go2b.cn",
+               9999,
+                msg => {
+                    //console.warn(msg);
+                },
+                (result) => {
+                    //console.warn(result);
+                    //NativeModules.ToastExample.show(result, 1);
+                    //data1 = result;  
+                    //alert(result);
+                 }
+            );
+			*/
 		})
 	}
 	componentDidUpdate(prevProps, prevState, snapshot){

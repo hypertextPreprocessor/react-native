@@ -148,6 +148,7 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-splash-screen')
     implementation project(':react-native-vector-icons')
     implementation project(':react-native-orientation')
     implementation project(':react-native-maps')
@@ -155,6 +156,7 @@ dependencies {
     implementation project(':react-native-gesture-handler')
     implementation project(':react-native-amap3d')
     implementation fileTree(dir: "libs", include: ["*.jar"])
+	implementation "com.alibaba:fastjson:1.1.54.android"
     implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     implementation 'com.android.support:support-v4:27.1.1'
     implementation 'com.facebook.fresco:animated-gif:1.10.0'

@@ -85,7 +85,7 @@ class Tab2 extends Component{
 	_renderHeader(item, expanded){
 		return (
 			<View style={{width:'100%',flexDirection: "row",paddingVertical:10,justifyContent: "space-between",alignItems: "center" , backgroundColor: "#A9DAD6",borderBottomWidth:1,borderColor:"#dedede"}}>
-				<Text style={{paddingLeft:"2%"}}>{"仪器:"+item.equipment_name+" / 目标："+item.equipment_number}</Text>
+				<Text style={{paddingLeft:"2%"}}>{"仪器:"+item.equipment_name+" / 型号："+item.equipment_number}</Text>
 				 {expanded
 				  ? <Icon style={{ fontSize: 18,paddingRight:"2%" }} name="remove-circle" />
 				  : <Icon style={{ fontSize: 18,paddingRight:"2%" }} name="add-circle" />
